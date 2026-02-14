@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SheetStudio CMS</title>
+  <meta name="description" content="SheetStudio - Headless CMS dengan Google Sheets">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & ReactDOM UMD -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel Standalone -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Prism.js for Syntax Highlighting -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Tailwind Config -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: 'var(--theme-color)',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            serif: ['Georgia', 'Cambria', 'serif'],
+          },
+          animation: {
+            'bounce-in': 'bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+            'fade-in': 'fadeIn 0.3s ease-out',
+            'slide-up': 'slideUp 0.4s ease-out',
+          },
+          keyframes: {
+            bounceIn: {
+              '0%': { transform: 'scale(0.3)', opacity: '0' },
+              '50%': { transform: 'scale(1.05)' },
+              '70%': { transform: 'scale(0.9)' },
+              '100%': { transform: 'scale(1)', opacity: '1' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideUp: {
+              '0%': { transform: 'translateY(20px)', opacity: '0' },
+              '100%': { transform: 'translateY(0)', opacity: '1' },
+            },
+          },
+        },
+      },
+    };
+  </script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    :root {
+      --theme-color: #3b82f6;
+    }
+    
+    .theme-blue { --theme-color: #3b82f6; }
+    .theme-indigo { --theme-color: #6366f1; }
+    .theme-rose { --theme-color: #f43f5e; }
+    .theme-amber { --theme-color: #f59e0b; }
+    .theme-emerald { --theme-color: #10b981; }
+    .theme-violet { --theme-color: #8b5cf6; }
+    .theme-cyan { --theme-color: #06b6d4; }
+    .theme-slate { --theme-color: #64748b; }
+    
+    /* Reading Progress Bar */
+    #reading-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: var(--theme-color);
+      z-index: 9999;
+      transition: width 0.1s ease-out;
+    }
+    
+    /* Glassmorphism */
+    .glass {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    
+    .dark .glass {
+      background: rgba(17, 24, 39, 0.8);
+    }
+    
+    /* Prose Styles */
+    .prose-custom h2 {
+      font-size: 1.875rem;
+      font-weight: 700;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: inherit;
+      scroll-margin-top: 100px;
+    }
+    
+    .prose-custom h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      color: inherit;
+    }
+    
+    .prose-custom p {
+      margin-bottom: 1.25rem;
+      line-height: 1.8;
+      font-size: 1.125rem;
+    }
+    
+    .prose-custom ul, .prose-custom ol {
+      margin-bottom: 1.25rem;
+      padding-left: 1.5rem;
+    }
+    
+    .prose-custom li {
+      margin-bottom: 0.5rem;
+      line-height: 1.7;
+    }
+    
+    .prose-custom blockquote {
+      border-left: 4px solid var(--theme-color);
+      padding-left: 1rem;
+      margin: 1.5rem 0;
+      font-style: italic;
+      color: inherit;
+      opacity: 0.9;
+    }
+    
+    .prose-custom pre {
+      background: #1e293b;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+    }
+    
+    .prose-custom code {
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.9em;
+    }
+    
+    .prose-custom img {
+      border-radius: 0.5rem;
+      margin: 1.5rem 0;
+      max-width: 100%;
+      height: auto;
+    }
+    
+    /* ToC Active State */
+    .toc-link.active {
+      color: var(--theme-color);
+      font-weight: 600;
+      border-left: 2px solid var(--theme-color);
+      padding-left: 0.75rem;
+    }
+    
+    /* Card Hover */
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Smooth Scroll */
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--theme-color);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback, createContext, useContext } = React;
+    
+    // ============================================
+    // API CONFIGURATION
+    // ============================================
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyDxzNX0EG_1UbgckGMovQu_fhkNBNZnjNC-Ho9Ntuu5QPU0M2PV3wwpEtMPpOu7wF7/exec';
+    
+    // ============================================
+    // CONTEXT & PROVIDERS
+    // ============================================
+    const ThemeContext = createContext();
+    
+    const ThemeProvider = ({ children }) => {
+      const [theme, setTheme] = useState('blue');
+      const [darkMode, setDarkMode] = useState(false);
+      
+      useEffect(() => {
+        const savedTheme = localStorage.getItem('sheetstudio-theme');
+        const savedDarkMode = localStorage.getItem('sheetstudio-darkmode');
+        
+        if (savedTheme) setTheme(savedTheme);
+        if (savedDarkMode !== null) {
+          setDarkMode(savedDarkMode === 'true');
+        } else {
+          setDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
+        }
+      }, []);
+      
+      useEffect(() => {
+        document.documentElement.className = `theme-${theme}`;
+        localStorage.setItem('sheetstudio-theme', theme);
+      }, [theme]);
+      
+      useEffect(() => {
+        if (darkMode) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+        localStorage.setItem('sheetstudio-darkmode', darkMode);
+      }, [darkMode]);
+      
+      const themes = [
+        { id: 'blue', name: 'Blue', color: '#3b82f6' },
+        { id: 'indigo', name: 'Indigo', color: '#6366f1' },
+        { id: 'rose', name: 'Rose', color: '#f43f5e' },
+        { id: 'amber', name: 'Amber', color: '#f59e0b' },
+        { id: 'emerald', name: 'Emerald', color: '#10b981' },
+        { id: 'violet', name: 'Violet', color: '#8b5cf6' },
+        { id: 'cyan', name: 'Cyan', color: '#06b6d4' },
+        { id: 'slate', name: 'Slate', color: '#64748b' },
+      ];
+      
+      return (
+        <ThemeContext.Provider value={{ theme, setTheme, darkMode, setDarkMode, themes }}>
+          {children}
+        </ThemeContext.Provider>
+      );
+    };
+    
+    const useTheme = () => useContext(ThemeContext);
+    
+    // ============================================
+    // COMPONENTS
+    // ============================================
+    
+    // Reading Progress Bar
+    const ReadingProgress = () => {
+      const [progress, setProgress] = useState(0);
+      
+      useEffect(() => {
+        const handleScroll = () => {
+          const windowHeight = window.innerHeight;
+          const documentHeight = document.documentElement.scrollHeight - windowHeight;
+          const scrollTop = window.scrollY;
+          const scrollProgress = (scrollTop / documentHeight) * 100;
+          setProgress(Math.min(scrollProgress, 100));
+        };
+        
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+      }, []);
+      
+      return <div id="reading-progress" style={{ width: `${progress}%` }} />;
+    };
+    
+    // Cookie Banner
+    const CookieBanner = () => {
+      const [show, setShow] = useState(false);
+      
+      useEffect(() => {
+        const accepted = localStorage.getItem('sheetstudio-cookies');
+        if (!accepted) {
+          setTimeout(() => setShow(true), 1000);
+        }
+      }, []);
+      
+      const accept = () => {
+        localStorage.setItem('sheetstudio-cookies', 'true');
+        setShow(false);
+      };
+      
+      if (!show) return null;
+      
+      return (
+        <div className="fixed bottom-4 right-4 z-50 max-w-sm animate-bounce-in">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <i data-lucide="cookie" className="w-5 h-5 text-primary"></i>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold mb-1">Cookie Policy</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  Kami menggunakan cookie untuk meningkatkan pengalaman browsing Anda.
+                </p>
+                <button 
+                  onClick={accept}
+                  className="w-full py-2 px-4 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+                >
+                  Saya Mengerti
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+    
+    // Navigation
+    const Navigation = ({ currentPage, navigateTo, posts }) => {
+      const { theme, setTheme, darkMode, setDarkMode, themes } = useTheme();
+      const [showThemeMenu, setShowThemeMenu] = useState(false);
+      const [isScrolled, setIsScrolled] = useState(false);
+      
+      useEffect(() => {
+        const handleScroll = () => {
+          setIsScrolled(window.scrollY > 20);
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+      }, []);
+      
+      // Generate menu dinamis dari posts (halaman dengan label 'Utama', 'page', dll)
+      const menuItems = React.useMemo(() => {
+        const items = [{ label: 'Beranda', slug: '' }];
+        
+        if (posts && posts.length > 0) {
+          // Ambil halaman dengan label 'Utama' atau slug tertentu untuk menu
+          const menuPages = posts.filter(p => 
+            p.status === 'published' && 
+            p.slug && 
+            (p.label === 'Utama' || p.label === 'page' || p.label === 'landing')
+          ).slice(0, 4);
+          
+          menuPages.forEach(page => {
+            if (page.slug && page.slug !== '') {
+              items.push({
+                label: page.title,
+                slug: page.slug
+              });
+            }
+          });
+        }
+        
+        return items;
+      }, [posts]);
+      
+      return (
+        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'glass shadow-lg' : 'bg-transparent'}`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              {/* Logo */}
+              <button 
+                onClick={() => navigateTo('')}
+                className="text-xl font-bold italic text-primary hover:opacity-80 transition-opacity"
+              >
+                SheetStudio
+              </button>
+              
+              {/* Menu */}
+              <div className="hidden md:flex items-center gap-6">
+                {menuItems.map((item) => (
+                  <button
+                    key={item.slug}
+                    onClick={() => navigateTo(item.slug)}
+                    className={`text-sm font-medium transition-colors hover:text-primary ${
+                      currentPage === item.slug ? 'text-primary' : 'text-gray-600 dark:text-gray-400'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Controls */}
+              <div className="flex items-center gap-2">
+                {/* Theme Selector */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowThemeMenu(!showThemeMenu)}
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    title="Pilih Tema"
+                  >
+                    <i data-lucide="palette" className="w-5 h-5"></i>
+                  </button>
+                  
+                  {showThemeMenu && (
+                    <div className="absolute right-0 top-full mt-2 p-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 animate-fade-in">
+                      <div className="grid grid-cols-4 gap-1">
+                        {themes.map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => { setTheme(t.id); setShowThemeMenu(false); }}
+                            className={`w-8 h-8 rounded-lg transition-transform hover:scale-110 ${theme === t.id ? 'ring-2 ring-offset-2 ring-gray-400' : ''}`}
+                            style={{ backgroundColor: t.color }}
+                            title={t.name}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Dark Mode Toggle */}
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  title={darkMode ? 'Light Mode' : 'Dark Mode'}
+                >
+                  {darkMode ? (
+                    <i data-lucide="sun" className="w-5 h-5"></i>
+                  ) : (
+                    <i data-lucide="moon" className="w-5 h-5"></i>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </nav>
+      );
+    };
+    
+    // Table of Contents
+    const TableOfContents = ({ content }) => {
+      const [headings, setHeadings] = useState([]);
+      const [activeId, setActiveId] = useState('');
+      
+      useEffect(() => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'text/html');
+        const h2Elements = doc.querySelectorAll('h2');
+        const extractedHeadings = Array.from(h2Elements).map((h2, index) => ({
+          id: `heading-${index}`,
+          text: h2.textContent,
+        }));
+        setHeadings(extractedHeadings);
+      }, [content]);
+      
+      useEffect(() => {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                setActiveId(entry.target.id);
+              }
+            });
+          },
+          { rootMargin: '-100px 0px -60% 0px' }
+        );
+        
+        headings.forEach((_, index) => {
+          const element = document.getElementById(`heading-${index}`);
+          if (element) observer.observe(element);
+        });
+        
+        return () => observer.disconnect();
+      }, [headings]);
+      
+      const scrollToHeading = (index) => {
+        const element = document.getElementById(`heading-${index}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      };
+      
+      if (headings.length === 0) return null;
+      
+      return (
+        <div className="sticky top-24">
+          <h3 className="font-semibold text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">
+            Daftar Isi
+          </h3>
+          <nav className="space-y-2">
+            {headings.map((heading, index) => (
+              <button
+                key={heading.id}
+                onClick={() => scrollToHeading(index)}
+                className={`block text-left text-sm transition-all duration-200 hover:text-primary toc-link ${
+                  activeId === heading.id ? 'active' : 'text-gray-600 dark:text-gray-400 border-l-2 border-transparent pl-3'
+                }`}
+              >
+                {heading.text}
+              </button>
+            ))}
+          </nav>
+        </div>
+      );
+    };
+    
+    // Reading Time Calculator
+    const ReadingTime = ({ content }) => {
+      const [readingTime, setReadingTime] = useState(0);
+      
+      useEffect(() => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'text/html');
+        const text = doc.body.textContent || '';
+        const wordCount = text.trim().split(/\s+/).length;
+        const minutes = Math.ceil(wordCount / 200);
+        setReadingTime(minutes);
+      }, [content]);
+      
+      return (
+        <span className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+          <i data-lucide="clock" className="w-4 h-4"></i>
+          {readingTime} menit baca
+        </span>
+      );
+    };
+    
+    // Content Processor (inject IDs and ads)
+    const ProcessedContent = ({ content }) => {
+      const contentRef = useRef(null);
+      
+      useEffect(() => {
+        if (contentRef.current) {
+          // Add IDs to h2 elements
+          const h2Elements = contentRef.current.querySelectorAll('h2');
+          h2Elements.forEach((h2, index) => {
+            h2.id = `heading-${index}`;
+          });
+          
+          // Inject ads after 2nd and 5th paragraph
+          const paragraphs = contentRef.current.querySelectorAll('p');
+          const adPositions = [2, 5];
+          
+          adPositions.forEach((pos, idx) => {
+            if (paragraphs[pos]) {
+              const adPlaceholder = document.createElement('div');
+              adPlaceholder.className = 'my-8 p-6 bg-gray-100 dark:bg-gray-800 rounded-xl text-center';
+              adPlaceholder.innerHTML = `
+                <span class="text-xs text-gray-500 uppercase tracking-wider">Iklan</span>
+                <div class="mt-2 text-gray-400">Ad Placeholder ${idx + 1}</div>
+              `;
+              paragraphs[pos].after(adPlaceholder);
+            }
+          });
+          
+          // Re-run Prism highlighting
+          if (window.Prism) {
+            window.Prism.highlightAllUnder(contentRef.current);
+          }
+          
+          // Initialize Lucide icons in content
+          if (window.lucide) {
+            window.lucide.createIcons({
+              attrs: {
+                'stroke-width': 2,
+              },
+              nameAttr: 'data-lucide',
+            });
+          }
+        }
+      }, [content]);
+      
+      return (
+        <div 
+          ref={contentRef}
+          className="prose-custom"
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
+      );
+    };
+    
+    // Related Posts
+    const RelatedPosts = ({ currentPost, allPosts, navigateTo }) => {
+      const currentCategory = currentPost.category || currentPost.label;
+      const related = allPosts
+        .filter(p => 
+          (p.type === 'post' || p.type === 'blog') && 
+          p.id !== currentPost.id && 
+          (p.category === currentCategory || p.label === currentCategory)
+        )
+        .slice(0, 3);
+      
+      if (related.length === 0) return null;
+      
+      return (
+        <div className="mt-16 pt-8 border-t border-gray-200 dark:border-gray-700">
+          <h3 className="text-2xl font-bold mb-6">Artikel Terkait</h3>
+          <div className="grid md:grid-cols-3 gap-6">
+            {related.map((post) => (
+              <button
+                key={post.id}
+                onClick={() => navigateTo(post.slug)}
+                className="text-left group"
+              >
+                <div className="aspect-video rounded-xl overflow-hidden mb-4">
+                  <img 
+                    src={post.image_url} 
+                    alt={post.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+                <span className="text-xs font-medium text-primary uppercase tracking-wider">
+                  {post.category || post.label}
+                </span>
+                <h4 className="font-semibold mt-1 group-hover:text-primary transition-colors">
+                  {post.title}
+                </h4>
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    };
+    
+    // Post Card
+    const PostCard = ({ post, navigateTo }) => {
+      const category = post.category || post.label || '';
+      return (
+        <button
+          onClick={() => navigateTo(post.slug)}
+          className="text-left card-hover bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg"
+        >
+          <div className="aspect-video overflow-hidden">
+            <img 
+              src={post.image_url} 
+              alt={post.title}
+              className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+            />
+          </div>
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-3">
+              {category && (
+                <span className="px-3 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full">
+                  {category}
+                </span>
+              )}
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {post.date ? new Date(post.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : ''}
+              </span>
+            </div>
+            <h3 className="text-xl font-bold mb-2 line-clamp-2 hover:text-primary transition-colors">
+              {post.title}
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3">
+              {post.description}
+            </p>
+          </div>
+        </button>
+      );
+    };
+    
+    // Layout: Grid (Home)
+    const GridLayout = ({ posts, navigateTo }) => {
+      // Filter posts dengan tipe 'post' atau 'blog'
+      const publishedPosts = posts.filter(p => 
+        (p.type === 'post' || p.type === 'blog') && 
+        p.status === 'published'
+      );
+      
+      return (
+        <div className="animate-fade-in">
+          {/* Hero Section */}
+          <section className="relative py-24 lg:py-32 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"></div>
+            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+              <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                <span className="italic text-primary">SheetStudio</span>
+              </h1>
+              <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-8">
+                Headless CMS modern yang menggunakan Google Sheets sebagai database. 
+                Kelola konten dengan mudah, tampilkan dengan elegan.
+              </p>
+              <div className="flex flex-wrap justify-center gap-4">
+                {publishedPosts.length > 0 && (
+                  <button 
+                    onClick={() => navigateTo(publishedPosts[0].slug)}
+                    className="px-8 py-3 bg-primary text-white rounded-full font-medium hover:opacity-90 transition-opacity"
+                  >
+                    Mulai Sekarang
+                  </button>
+                )}
+                <a 
+                  href="https://github.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-8 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-full font-medium hover:border-primary hover:text-primary transition-colors"
+                >
+                  Lihat di GitHub
+                </a>
+              </div>
+            </div>
+          </section>
+          
+          {/* Posts Grid */}
+          {publishedPosts.length > 0 && (
+            <section className="py-16 bg-gray-100 dark:bg-gray-800/50">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-2xl font-bold">Artikel Terbaru</h2>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {publishedPosts.length} artikel
+                  </span>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {publishedPosts.map((post) => (
+                    <PostCard key={post.id} post={post} navigateTo={navigateTo} />
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+          
+          {/* Features */}
+          <section className="py-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <h2 className="text-3xl font-bold text-center mb-12">Fitur Unggulan</h2>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {[
+                  { icon: 'database', title: 'Google Sheets', desc: 'Database yang familiar dan collaborative' },
+                  { icon: 'zap', title: 'Real-time', desc: 'Perubahan langsung terlihat di website' },
+                  { icon: 'palette', title: '8 Tema Warna', desc: 'Kustomisasi sesuai brand Anda' },
+                  { icon: 'moon', title: 'Dark Mode', desc: 'Mendukung preferensi sistem' },
+                ].map((feature, idx) => (
+                  <div key={idx} className="text-center p-6">
+                    <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+                      <i data-lucide={feature.icon} className="w-7 h-7 text-primary"></i>
+                    </div>
+                    <h3 className="font-semibold mb-2">{feature.title}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{feature.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        </div>
+      );
+    };
+    
+    // Layout: Post
+    const PostLayout = ({ post, allPosts, navigateTo }) => {
+      const category = post.category || post.label || '';
+      return (
+        <div className="animate-fade-in">
+          {/* Hero Image */}
+          <div className="relative h-[50vh] min-h-[400px]">
+            <img 
+              src={post.image_url} 
+              alt={post.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-8">
+              <div className="max-w-4xl mx-auto">
+                {category && (
+                  <span className="inline-block px-3 py-1 bg-primary text-white text-sm font-medium rounded-full mb-4">
+                    {category}
+                  </span>
+                )}
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+                  {post.title}
+                </h1>
+                <div className="flex flex-wrap items-center gap-4 text-white/80">
+                  <span className="flex items-center gap-1">
+                    <i data-lucide="calendar" className="w-4 h-4"></i>
+                    {post.date ? new Date(post.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
+                  </span>
+                  <ReadingTime content={post.content} />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Content */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="grid lg:grid-cols-4 gap-12">
+              {/* Sidebar ToC */}
+              <aside className="hidden lg:block">
+                <TableOfContents content={post.content} />
+              </aside>
+              
+              {/* Main Content */}
+              <article className="lg:col-span-3 max-w-3xl">
+                <ProcessedContent content={post.content} />
+                <RelatedPosts currentPost={post} allPosts={allPosts} navigateTo={navigateTo} />
+              </article>
+            </div>
+          </div>
+        </div>
+      );
+    };
+    
+    // Layout: Page
+    const PageLayout = ({ page }) => {
+      return (
+        <div className="animate-fade-in pt-24 pb-16">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            {page.title !== 'Beranda' && (
+              <h1 className="text-4xl font-bold text-center mb-8">{page.title}</h1>
+            )}
+            <div dangerouslySetInnerHTML={{ __html: page.content }} />
+          </div>
+        </div>
+      );
+    };
+    
+    // 404 Page
+    const NotFound = ({ navigateTo }) => {
+      return (
+        <div className="min-h-screen flex items-center justify-center animate-fade-in">
+          <div className="text-center">
+            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <i data-lucide="file-x" className="w-12 h-12 text-primary"></i>
+            </div>
+            <h1 className="text-6xl font-bold mb-4">404</h1>
+            <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
+              Halaman tidak ditemukan
+            </p>
+            <button
+              onClick={() => navigateTo('')}
+              className="px-6 py-3 bg-primary text-white rounded-full font-medium hover:opacity-90 transition-opacity"
+            >
+              Kembali ke Beranda
+            </button>
+          </div>
+        </div>
+      );
+    };
+    
+    // Footer
+    const Footer = () => {
+      return (
+        <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div className="grid md:grid-cols-4 gap-8">
+              <div className="md:col-span-2">
+                <span className="text-2xl font-bold italic text-primary">SheetStudio</span>
+                <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-sm">
+                  Headless CMS modern yang menggunakan Google Sheets sebagai database. 
+                  Kelola konten dengan mudah, tampilkan dengan elegan.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-4">Menu</h4>
+                <ul className="space-y-2 text-gray-600 dark:text-gray-400">
+                  <li><a href="/" className="hover:text-primary transition-colors">Beranda</a></li>
+                  <li><a href="/tentang-kami" className="hover:text-primary transition-colors">Tentang</a></li>
+                  <li><a href="/kontak" className="hover:text-primary transition-colors">Kontak</a></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-4">Sosial</h4>
+                <div className="flex gap-4">
+                  <a href="#" className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-primary hover:text-white transition-colors">
+                    <i data-lucide="twitter" className="w-5 h-5"></i>
+                  </a>
+                  <a href="#" className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-primary hover:text-white transition-colors">
+                    <i data-lucide="github" className="w-5 h-5"></i>
+                  </a>
+                  <a href="#" className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-primary hover:text-white transition-colors">
+                    <i data-lucide="linkedin" className="w-5 h-5"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 text-center text-gray-500 dark:text-gray-400 text-sm">
+              © {new Date().getFullYear()} SheetStudio. Built with ❤️ using Google Sheets.
+            </div>
+          </div>
+        </footer>
+      );
+    };
+    
+    // ============================================
+    // MAIN APP
+    // ============================================
+    const App = () => {
+      const [currentPage, setCurrentPage] = useState('');
+      const [posts, setPosts] = useState([]);
+      const [loading, setLoading] = useState(true);
+      
+      // Load data from API
+      useEffect(() => {
+        const fetchData = async () => {
+          try {
+            const response = await fetch(API_URL);
+            const result = await response.json();
+            if (result.success && result.data) {
+              setPosts(result.data);
+            } else {
+              console.error('API Error:', result.error);
+              setPosts([]);
+            }
+          } catch (error) {
+            console.error('Fetch Error:', error);
+            setPosts([]);
+          } finally {
+            setLoading(false);
+          }
+        };
+        fetchData();
+      }, []);
+      
+      // Handle routing
+      useEffect(() => {
+        const path = window.location.pathname.slice(1);
+        setCurrentPage(path);
+      }, []);
+      
+      const navigateTo = (slug) => {
+        setCurrentPage(slug);
+        window.history.pushState({}, '', slug ? `/${slug}` : '/');
+        window.scrollTo(0, 0);
+      };
+      
+      // Handle browser back/forward
+      useEffect(() => {
+        const handlePopState = () => {
+          const path = window.location.pathname.slice(1);
+          setCurrentPage(path);
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+      }, []);
+      
+      // Update meta tags
+      useEffect(() => {
+        const currentPost = posts.find(p => p.slug === currentPage);
+        if (currentPost) {
+          document.title = `${currentPost.title} | SheetStudio`;
+          
+          // Update meta description
+          let metaDesc = document.querySelector('meta[name="description"]');
+          if (!metaDesc) {
+            metaDesc = document.createElement('meta');
+            metaDesc.setAttribute('name', 'description');
+            document.head.appendChild(metaDesc);
+          }
+          metaDesc.setAttribute('content', currentPost.description);
+          
+          // Update Open Graph
+          let ogTitle = document.querySelector('meta[property="og:title"]');
+          if (!ogTitle) {
+            ogTitle = document.createElement('meta');
+            ogTitle.setAttribute('property', 'og:title');
+            document.head.appendChild(ogTitle);
+          }
+          ogTitle.setAttribute('content', currentPost.title);
+          
+          let ogDesc = document.querySelector('meta[property="og:description"]');
+          if (!ogDesc) {
+            ogDesc = document.createElement('meta');
+            ogDesc.setAttribute('property', 'og:description');
+            document.head.appendChild(ogDesc);
+          }
+          ogDesc.setAttribute('content', currentPost.description);
+          
+          if (currentPost.image_url) {
+            let ogImage = document.querySelector('meta[property="og:image"]');
+            if (!ogImage) {
+              ogImage = document.createElement('meta');
+              ogImage.setAttribute('property', 'og:image');
+              document.head.appendChild(ogImage);
+            }
+            ogImage.setAttribute('content', currentPost.image_url);
+          }
+          
+          // Inject custom meta/scripts
+          if (currentPost.meta) {
+            const metaContainer = document.createElement('div');
+            metaContainer.innerHTML = currentPost.meta;
+            document.head.appendChild(metaContainer);
+          }
+        } else {
+          document.title = 'SheetStudio CMS';
+        }
+      }, [currentPage, posts]);
+      
+      // Render current page
+      const renderContent = () => {
+        if (loading) {
+          return (
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full"></div>
+            </div>
+          );
+        }
+        
+        const currentPost = posts.find(p => p.slug === currentPage);
+        
+        if (!currentPost) {
+          // Check if it's home (empty slug)
+          if (currentPage === '') {
+            return <GridLayout posts={posts} navigateTo={navigateTo} />;
+          }
+          return <NotFound navigateTo={navigateTo} />;
+        }
+        
+        switch (currentPost.type) {
+          case 'post':
+            return <PostLayout post={currentPost} allPosts={posts} navigateTo={navigateTo} />;
+          case 'page':
+            return <PageLayout page={currentPost} />;
+          case 'grid':
+            return <GridLayout posts={posts} navigateTo={navigateTo} />;
+          default:
+            return <PageLayout page={currentPost} />;
+        }
+      };
+      
+      return (
+        <ThemeProvider>
+          <div className="min-h-screen flex flex-col">
+            <ReadingProgress />
+            <Navigation currentPage={currentPage} navigateTo={navigateTo} posts={posts} />
+            <main className="flex-1">
+              {renderContent()}
+            </main>
+            <Footer />
+            <CookieBanner />
+          </div>
+        </ThemeProvider>
+      );
+    };
+    
+    // Render App
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+    
+    // Initialize Lucide icons
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
