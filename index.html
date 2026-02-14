@@ -1,1056 +1,1892 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SheetStudio CMS</title>
-  <meta name="description" content="SheetStudio - Headless CMS dengan Google Sheets">
-  
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- React & ReactDOM UMD -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  
-  <!-- Babel Standalone -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  
-  <!-- Prism.js for Syntax Highlighting -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
-  
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  
-  <!-- Tailwind Config -->
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            primary: 'var(--theme-color)',
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-            serif: ['Georgia', 'Cambria', 'serif'],
-          },
-          animation: {
-            'bounce-in': 'bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-            'fade-in': 'fadeIn 0.3s ease-out',
-            'slide-up': 'slideUp 0.4s ease-out',
-          },
-          keyframes: {
-            bounceIn: {
-              '0%': { transform: 'scale(0.3)', opacity: '0' },
-              '50%': { transform: 'scale(1.05)' },
-              '70%': { transform: 'scale(0.9)' },
-              '100%': { transform: 'scale(1)', opacity: '1' },
-            },
-            fadeIn: {
-              '0%': { opacity: '0' },
-              '100%': { opacity: '1' },
-            },
-            slideUp: {
-              '0%': { transform: 'translateY(20px)', opacity: '0' },
-              '100%': { transform: 'translateY(0)', opacity: '1' },
-            },
-          },
-        },
-      },
-    };
-  </script>
-  
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    
-    :root {
-      --theme-color: #3b82f6;
-    }
-    
-    .theme-blue { --theme-color: #3b82f6; }
-    .theme-indigo { --theme-color: #6366f1; }
-    .theme-rose { --theme-color: #f43f5e; }
-    .theme-amber { --theme-color: #f59e0b; }
-    .theme-emerald { --theme-color: #10b981; }
-    .theme-violet { --theme-color: #8b5cf6; }
-    .theme-cyan { --theme-color: #06b6d4; }
-    .theme-slate { --theme-color: #64748b; }
-    
-    /* Reading Progress Bar */
-    #reading-progress {
-      position: fixed;
-      top: 0;
-      left: 0;
-      height: 3px;
-      background: var(--theme-color);
-      z-index: 9999;
-      transition: width 0.1s ease-out;
-    }
-    
-    /* Glassmorphism */
-    .glass {
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-    
-    .dark .glass {
-      background: rgba(17, 24, 39, 0.8);
-    }
-    
-    /* Prose Styles */
-    .prose-custom h2 {
-      font-size: 1.875rem;
-      font-weight: 700;
-      margin-top: 2.5rem;
-      margin-bottom: 1rem;
-      color: inherit;
-      scroll-margin-top: 100px;
-    }
-    
-    .prose-custom h3 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin-top: 2rem;
-      margin-bottom: 0.75rem;
-      color: inherit;
-    }
-    
-    .prose-custom p {
-      margin-bottom: 1.25rem;
-      line-height: 1.8;
-      font-size: 1.125rem;
-    }
-    
-    .prose-custom ul, .prose-custom ol {
-      margin-bottom: 1.25rem;
-      padding-left: 1.5rem;
-    }
-    
-    .prose-custom li {
-      margin-bottom: 0.5rem;
-      line-height: 1.7;
-    }
-    
-    .prose-custom blockquote {
-      border-left: 4px solid var(--theme-color);
-      padding-left: 1rem;
-      margin: 1.5rem 0;
-      font-style: italic;
-      color: inherit;
-      opacity: 0.9;
-    }
-    
-    .prose-custom pre {
-      background: #1e293b;
-      border-radius: 0.5rem;
-      padding: 1rem;
-      overflow-x: auto;
-      margin: 1.5rem 0;
-    }
-    
-    .prose-custom code {
-      font-family: 'Monaco', 'Menlo', monospace;
-      font-size: 0.9em;
-    }
-    
-    .prose-custom img {
-      border-radius: 0.5rem;
-      margin: 1.5rem 0;
-      max-width: 100%;
-      height: auto;
-    }
-    
-    /* ToC Active State */
-    .toc-link.active {
-      color: var(--theme-color);
-      font-weight: 600;
-      border-left: 2px solid var(--theme-color);
-      padding-left: 0.75rem;
-    }
-    
-    /* Card Hover */
-    .card-hover {
-      transition: all 0.3s ease;
-    }
-    .card-hover:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.2);
-    }
-    
-    /* Smooth Scroll */
-    html {
-      scroll-behavior: smooth;
-    }
-    
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: var(--theme-color);
-      border-radius: 4px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Prompt Artikel SEO - PoinTru</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: transparent;
+            min-height: 100vh;
+        }
+
+        .container {
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .content {
+            padding: 30px 20px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group .help-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-top: 3px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-item label {
+            font-weight: 400;
+            font-size: 13px;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 14px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-clear {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #c82333;
+        }
+
+        .output-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .output-section.show {
+            display: block;
+        }
+
+        .output-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .output-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .anti-ai-section {
+            background: #f0f9ff;
+            border: 2px solid #3b82f6;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .anti-ai-section h4 {
+            color: #1e40af;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .anti-ai-section h4::before {
+            content: "🛡️";
+            font-size: 20px;
+        }
+
+        .style-section {
+            background: #fef3f2;
+            border: 2px solid #f97316;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .style-section h4 {
+            color: #c2410c;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .style-section h4::before {
+            content: "✍️";
+            font-size: 20px;
+        }
+
+        .slider-container {
+            margin: 15px 0;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .radio-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .radio-item:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .radio-item input[type="radio"] {
+            margin-top: 2px;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .radio-item label {
+            font-weight: 500;
+            font-size: 13px;
+            cursor: pointer;
+            margin: 0;
+            flex: 1;
+        }
+
+        .radio-item .radio-desc {
+            font-size: 11px;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        .radio-item input[type="radio"]:checked + div label {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .keyword-badge {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .content {
+                padding: 20px 15px;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                min-width: 100%;
+            }
+
+            .checkbox-group, .radio-group {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
-  <div id="root"></div>
-  
-  <script type="text/babel">
-    const { useState, useEffect, useRef, useCallback, createContext, useContext } = React;
-    
-    // ============================================
-    // API CONFIGURATION
-    // ============================================
-    const API_URL = 'https://script.google.com/macros/s/AKfycbyqjUiWAIwcRRQkZKYCnMH1UwBGiObL6P2XgZcxpybt1GXqTNpgEoGne1YQkWcXOiXR/exec';
-    
-    // ============================================
-    // CONTEXT & PROVIDERS
-    // ============================================
-    const ThemeContext = createContext();
-    
-    const ThemeProvider = ({ children }) => {
-      const [theme, setTheme] = useState('blue');
-      const [darkMode, setDarkMode] = useState(false);
-      
-      useEffect(() => {
-        const savedTheme = localStorage.getItem('sheetstudio-theme');
-        const savedDarkMode = localStorage.getItem('sheetstudio-darkmode');
-        
-        if (savedTheme) setTheme(savedTheme);
-        if (savedDarkMode !== null) {
-          setDarkMode(savedDarkMode === 'true');
-        } else {
-          setDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
-        }
-      }, []);
-      
-      useEffect(() => {
-        document.documentElement.className = `theme-${theme}`;
-        localStorage.setItem('sheetstudio-theme', theme);
-      }, [theme]);
-      
-      useEffect(() => {
-        if (darkMode) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-        localStorage.setItem('sheetstudio-darkmode', darkMode);
-      }, [darkMode]);
-      
-      const themes = [
-        { id: 'blue', name: 'Blue', color: '#3b82f6' },
-        { id: 'indigo', name: 'Indigo', color: '#6366f1' },
-        { id: 'rose', name: 'Rose', color: '#f43f5e' },
-        { id: 'amber', name: 'Amber', color: '#f59e0b' },
-        { id: 'emerald', name: 'Emerald', color: '#10b981' },
-        { id: 'violet', name: 'Violet', color: '#8b5cf6' },
-        { id: 'cyan', name: 'Cyan', color: '#06b6d4' },
-        { id: 'slate', name: 'Slate', color: '#64748b' },
-      ];
-      
-      return (
-        <ThemeContext.Provider value={{ theme, setTheme, darkMode, setDarkMode, themes }}>
-          {children}
-        </ThemeContext.Provider>
-      );
-    };
-    
-    const useTheme = () => useContext(ThemeContext);
-    
-    // ============================================
-    // COMPONENTS
-    // ============================================
-    
-    // Reading Progress Bar
-    const ReadingProgress = () => {
-      const [progress, setProgress] = useState(0);
-      
-      useEffect(() => {
-        const handleScroll = () => {
-          const windowHeight = window.innerHeight;
-          const documentHeight = document.documentElement.scrollHeight - windowHeight;
-          const scrollTop = window.scrollY;
-          const scrollProgress = (scrollTop / documentHeight) * 100;
-          setProgress(Math.min(scrollProgress, 100));
-        };
-        
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
-      }, []);
-      
-      return <div id="reading-progress" style={{ width: `${progress}%` }} />;
-    };
-    
-    // Cookie Banner
-    const CookieBanner = () => {
-      const [show, setShow] = useState(false);
-      
-      useEffect(() => {
-        const accepted = localStorage.getItem('sheetstudio-cookies');
-        if (!accepted) {
-          setTimeout(() => setShow(true), 1000);
-        }
-      }, []);
-      
-      const accept = () => {
-        localStorage.setItem('sheetstudio-cookies', 'true');
-        setShow(false);
-      };
-      
-      if (!show) return null;
-      
-      return (
-        <div className="fixed bottom-4 right-4 z-50 max-w-sm animate-bounce-in">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <i data-lucide="cookie" className="w-5 h-5 text-primary"></i>
-              </div>
-              <div className="flex-1">
-                <h4 className="font-semibold mb-1">Cookie Policy</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  Kami menggunakan cookie untuk meningkatkan pengalaman browsing Anda.
-                </p>
-                <button 
-                  onClick={accept}
-                  className="w-full py-2 px-4 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
-                >
-                  Saya Mengerti
-                </button>
-              </div>
-            </div>
-          </div>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Generator Prompt Artikel SEO Anti-AI Detection</h1>
+            <p>Tool otomatis untuk membuat prompt artikel blog dan berita SEO-friendly yang lolos AI detector</p>
         </div>
-      );
-    };
-    
-    // Navigation
-    const Navigation = ({ currentPage, navigateTo, posts }) => {
-      const { theme, setTheme, darkMode, setDarkMode, themes } = useTheme();
-      const [showThemeMenu, setShowThemeMenu] = useState(false);
-      const [isScrolled, setIsScrolled] = useState(false);
-      
-      useEffect(() => {
-        const handleScroll = () => {
-          setIsScrolled(window.scrollY > 20);
-        };
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
-      }, []);
-      
-      // Generate menu dinamis dari posts (halaman dengan label 'Utama', 'page', dll)
-      const menuItems = React.useMemo(() => {
-        const items = [{ label: 'Beranda', slug: '' }];
-        
-        if (posts && posts.length > 0) {
-          // Ambil halaman dengan label 'Utama' atau slug tertentu untuk menu
-          const menuPages = posts.filter(p => 
-            p.status === 'published' && 
-            p.slug && 
-            (p.label === 'Utama' || p.label === 'page' || p.label === 'landing')
-          ).slice(0, 4);
-          
-          menuPages.forEach(page => {
-            if (page.slug && page.slug !== '') {
-              items.push({
-                label: page.title,
-                slug: page.slug
-              });
-            }
-          });
-        }
-        
-        return items;
-      }, [posts]);
-      
-      return (
-        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'glass shadow-lg' : 'bg-transparent'}`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              {/* Logo */}
-              <button 
-                onClick={() => navigateTo('')}
-                className="text-xl font-bold italic text-primary hover:opacity-80 transition-opacity"
-              >
-                SheetStudio
-              </button>
-              
-              {/* Menu */}
-              <div className="hidden md:flex items-center gap-6">
-                {menuItems.map((item) => (
-                  <button
-                    key={item.slug}
-                    onClick={() => navigateTo(item.slug)}
-                    className={`text-sm font-medium transition-colors hover:text-primary ${
-                      currentPage === item.slug ? 'text-primary' : 'text-gray-600 dark:text-gray-400'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-              
-              {/* Controls */}
-              <div className="flex items-center gap-2">
-                {/* Theme Selector */}
-                <div className="relative">
-                  <button
-                    onClick={() => setShowThemeMenu(!showThemeMenu)}
-                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                    title="Pilih Tema"
-                  >
-                    <i data-lucide="palette" className="w-5 h-5"></i>
-                  </button>
-                  
-                  {showThemeMenu && (
-                    <div className="absolute right-0 top-full mt-2 p-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 animate-fade-in">
-                      <div className="grid grid-cols-4 gap-1">
-                        {themes.map((t) => (
-                          <button
-                            key={t.id}
-                            onClick={() => { setTheme(t.id); setShowThemeMenu(false); }}
-                            className={`w-8 h-8 rounded-lg transition-transform hover:scale-110 ${theme === t.id ? 'ring-2 ring-offset-2 ring-gray-400' : ''}`}
-                            style={{ backgroundColor: t.color }}
-                            title={t.name}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
+
+        <div class="tabs">
+            <button class="tab active" data-tab="blog">📝 GP Blog (Artikel SEO)</button>
+            <button class="tab" data-tab="news">📰 GP News (Berita 5W+1H)</button>
+        </div>
+
+        <div class="content">
+            <!-- Tab Blog -->
+            <div class="tab-content active" id="blog">
+                <div class="info-box">
+                    <strong>GP Blog</strong> - Gunakan untuk membuat artikel SEO dengan struktur lengkap, tone akademik-humanized, dan optimasi mesin pencari.
                 </div>
-                
-                {/* Dark Mode Toggle */}
-                <button
-                  onClick={() => setDarkMode(!darkMode)}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                  title={darkMode ? 'Light Mode' : 'Dark Mode'}
-                >
-                  {darkMode ? (
-                    <i data-lucide="sun" className="w-5 h-5"></i>
-                  ) : (
-                    <i data-lucide="moon" className="w-5 h-5"></i>
-                  )}
-                </button>
-              </div>
+
+                <div class="warning-box">
+                    <strong>⚠️ Peringatan AI Detection:</strong> Tulisan yang terlalu formal, kaku, atau hanya berisi data/fakta tanpa opini pribadi cenderung terdeteksi sebagai AI. Gunakan fitur Anti-AI Detection di bawah untuk hasil yang lebih natural dan human-like!
+                </div>
+
+                <!-- FITUR BARU: Anti-AI Detection -->
+                <div class="anti-ai-section">
+                    <h4>Pengaturan Anti-AI Detection</h4>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="blog-personal-opinion" checked style="width: auto; margin-right: 5px;">
+                            Sertakan Opini & Pengalaman Pribadi
+                        </label>
+                        <div class="help-text">Tulisan dengan perspektif personal lebih sulit terdeteksi AI</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="blog-conversational" checked style="width: auto; margin-right: 5px;">
+                            Gaya Conversational (Seperti Ngobrol)
+                        </label>
+                        <div class="help-text">Menggunakan bahasa sehari-hari dengan kontraksi dan ekspresi natural</div>
+                    </div>
+
+                    <!-- FITUR BARU: Pilihan Kata Panggil -->
+                    <div class="form-group">
+                        <label>Pilih Kata Panggil (Personal Pronouns)</label>
+                        <select id="blog-pronouns">
+                            <option value="saya-anda">Saya & Anda (Formal-friendly)</option>
+                            <option value="gue-lo">Gue & Lo (Casual-friendly)</option>
+                            <option value="aku-kamu">Aku & Kamu (Semi-formal-friendly)</option>
+                            <option value="saya-kamu">Saya & Kamu (Semi-formal mix)</option>
+                        </select>
+                        <div class="help-text">Pilih pasangan kata panggil yang konsisten di seluruh artikel</div>
+                    </div>
+
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Level Variasi Kalimat</span>
+                            <span id="blog-variety-value">Tinggi</span>
+                        </div>
+                        <input type="range" id="blog-variety" min="1" max="3" value="3" step="1">
+                        <div class="help-text" style="margin-top: 5px;">Variasi panjang kalimat dan struktur untuk menghindari pola monoton AI</div>
+                    </div>
+
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Level Emotional Expression</span>
+                            <span id="blog-emotion-value">Sedang</span>
+                        </div>
+                        <input type="range" id="blog-emotion" min="1" max="3" value="2" step="1">
+                        <div class="help-text" style="margin-top: 5px;">Ekspresi emosi, anekdot, dan cerita yang membuat tulisan lebih "manusia"</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="blog-rhetorical" checked style="width: auto; margin-right: 5px;">
+                            Gunakan Pertanyaan Retoris & Transisi Natural
+                        </label>
+                        <div class="help-text">Membuat tulisan lebih mengalir dan engaging</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="blog-imperfect" checked style="width: auto; margin-right: 5px;">
+                            Izinkan "Imperfection" Natural
+                        </label>
+                        <div class="help-text">Kalimat tidak sempurna, digression ringan, seperti cara manusia berbicara</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Judul Artikel / Topik Utama *</label>
+                    <input type="text" id="blog-title" placeholder="Contoh: Cara Meningkatkan Traffic Website dengan SEO">
+                    <div class="help-text">Masukkan judul atau topik artikel yang ingin Anda buat</div>
+                </div>
+
+                <!-- FITUR UPGRADE: Keyword Utama -->
+                <div class="form-group">
+                    <label>
+                        Keyword Utama (Untuk Optimasi SEO)
+                        <span class="keyword-badge">PENTING</span>
+                    </label>
+                    <input type="text" id="blog-keyword" placeholder="Contoh: SEO on-page, optimasi website, teknik SEO 2024">
+                    <div class="help-text">Keyword akan diintegrasikan secara natural di judul, H2/H3, paragraf awal, dan meta description (density 1-2%)</div>
+                </div>
+
+                <!-- FITUR BARU: Gaya Tulisan Indonesia -->
+                <div class="style-section">
+                    <h4>Gaya Tulisan Indonesia</h4>
+                    <div class="form-group">
+                        <label>Pilih Gaya Penulisan yang Sesuai</label>
+                        <div class="radio-group">
+                            <!-- --- NEW FEATURE START --- -->
+                            <div class="radio-item">
+                                <input type="radio" name="blog-style" id="blog-style-auto" value="auto" checked>
+                                <div>
+                                    <label for="blog-style-auto">🤖 Pilih Otomatis (Berdasarkan Draft)</label>
+                                    <div class="radio-desc">Biarkan tool menganalisis draft & memilih gaya terbaik</div>
+                                </div>
+                            </div>
+                            <!-- --- NEW FEATURE END --- -->
+                            <div class="radio-item">
+                                <input type="radio" name="blog-style" id="blog-style-tutorial" value="tutorial">
+                                <div>
+                                    <label for="blog-style-tutorial">Tutorial/How-to</label>
+                                    <div class="radio-desc">Step-by-step, praktis, actionable</div>
+                                </div>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" name="blog-style" id="blog-style-listicle" value="listicle">
+                                <div>
+                                    <label for="blog-style-listicle">Listicle Engaging</label>
+                                    <div class="radio-desc">Numbered list, scannable, takeaway jelas</div>
+                                </div>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" name="blog-style" id="blog-style-feature" value="feature">
+                                <div>
+                                    <label for="blog-style-feature">Feature/Soft Article</label>
+                                    <div class="radio-desc">Storytelling, human interest, deskriptif</div>
+                                </div>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" name="blog-style" id="blog-style-akademik" value="akademik">
+                                <div>
+                                    <label for="blog-style-akademik">Akademik Populer</label>
+                                    <div class="radio-desc">Ilmiah tapi accessible, data-driven</div>
+                                </div>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" name="blog-style" id="blog-style-opini" value="opini">
+                                <div>
+                                    <label for="blog-style-opini">Opini/Esai</label>
+                                    <div class="radio-desc">Argumentatif, subjektif, analitis</div>
+                                </div>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" name="blog-style" id="blog-style-review" value="review">
+                                <div>
+                                    <label for="blog-style-review">Review/Ulasan</label>
+                                    <div class="radio-desc">Evaluatif, komparatif, pro-kontra</div>
+                                </div>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" name="blog-style" id="blog-style-storytelling" value="storytelling">
+                                <div>
+                                    <label for="blog-style-storytelling">Storytelling Naratif</label>
+                                    <div class="radio-desc">Alur cerita, karakter, emosional</div>
+                                </div>
+                            </div>
+                            <div class="radio-item">
+                                <input type="radio" name="blog-style" id="blog-style-jurnalistik" value="jurnalistik">
+                                <div>
+                                    <label for="blog-style-jurnalistik">Jurnalistik Straight</label>
+                                    <div class="radio-desc">Objektif, faktual, 5W+1H</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="help-text" style="margin-top: 10px;">Setiap gaya memiliki struktur dan tone yang berbeda, pilih sesuai tujuan artikel</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Draft Artikel / Context (Opsional)</label>
+                    <textarea id="blog-draft" placeholder="Paste draft artikel yang ingin diparafrase atau berikan konteks tambahan untuk artikel..."></textarea>
+                    <div class="help-text">Jika ada draft yang perlu diparafrase, masukkan di sini</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Target Panjang Artikel</label>
+                    <select id="blog-length">
+                        <option value="500">Pendek (500 kata)</option>
+                        <option value="800" selected>Medium (800 kata)</option>
+                        <option value="1200">Panjang (1200 kata)</option>
+                        <option value="1500">Sangat Panjang (1500+ kata)</option>
+                    </select>
+                    <div class="help-text">Pilih target panjang artikel sesuai kebutuhan SEO</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Elemen Tambahan yang Diinginkan</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="blog-table" value="table">
+                            <label for="blog-table">Tabel Perbandingan</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="blog-list" value="list">
+                            <label for="blog-list">List/Bullet Points</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="blog-button" value="button">
+                            <label for="blog-button">Tombol CTA</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="blog-notif" value="notif">
+                            <label for="blog-notif">Kotak Notifikasi</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="blog-image" value="image">
+                            <label for="blog-image">Grid Gambar 3 Kolom</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="blog-faq" value="faq">
+                            <label for="blog-faq">Accordion FAQ</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="blog-slider" value="slider">
+                            <label for="blog-slider">Slider/Carousel</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="blog-code" value="code">
+                            <label for="blog-code">Syntax Highlighter</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="blog-youtube" value="youtube">
+                            <label for="blog-youtube">Lazy Load YouTube</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="btn-generate-blog">✨ Generate Prompt</button>
+                    <button class="btn btn-secondary" id="btn-copy-blog">📋 Copy Prompt</button>
+                    <button class="btn btn-clear" id="btn-clear-blog">🗑️ Clear</button>
+                </div>
+
+                <div class="output-section" id="blog-output">
+                    <h3>📄 Prompt yang Dihasilkan</h3>
+                    <div class="output-box" id="blog-result"></div>
+                </div>
             </div>
-          </div>
-        </nav>
-      );
-    };
-    
-    // Table of Contents
-    const TableOfContents = ({ content }) => {
-      const [headings, setHeadings] = useState([]);
-      const [activeId, setActiveId] = useState('');
-      
-      useEffect(() => {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(content, 'text/html');
-        const h2Elements = doc.querySelectorAll('h2');
-        const extractedHeadings = Array.from(h2Elements).map((h2, index) => ({
-          id: `heading-${index}`,
-          text: h2.textContent,
-        }));
-        setHeadings(extractedHeadings);
-      }, [content]);
-      
-      useEffect(() => {
-        const observer = new IntersectionObserver(
-          (entries) => {
-            entries.forEach((entry) => {
-              if (entry.isIntersecting) {
-                setActiveId(entry.target.id);
-              }
-            });
-          },
-          { rootMargin: '-100px 0px -60% 0px' }
-        );
-        
-        headings.forEach((_, index) => {
-          const element = document.getElementById(`heading-${index}`);
-          if (element) observer.observe(element);
+
+            <!-- Tab News -->
+            <div class="tab-content" id="news">
+                <div class="info-box">
+                    <strong>GP News</strong> - Gunakan untuk membuat berita faktual dengan struktur 5W+1H (What, Who, When, Where, Why, How).
+                </div>
+
+                <div class="warning-box">
+                    <strong>⚠️ Peringatan AI Detection:</strong> Berita yang terlalu kaku dan formal tanpa sentuhan jurnalistik personal cenderung terdeteksi sebagai AI. Aktifkan fitur humanisasi di bawah!
+                </div>
+
+                <!-- FITUR BARU: Anti-AI Detection untuk News -->
+                <div class="anti-ai-section">
+                    <h4>Pengaturan Humanisasi Berita</h4>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="news-journalistic-voice" checked style="width: auto; margin-right: 5px;">
+                            Gunakan Suara Jurnalistik Personal
+                        </label>
+                        <div class="help-text">Tambahkan observasi dan konteks dari sudut pandang jurnalis</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="news-scene-setting" checked style="width: auto; margin-right: 5px;">
+                            Sertakan Scene Setting & Deskripsi Atmosfer
+                        </label>
+                        <div class="help-text">Menggambarkan suasana, kondisi lokasi, detail sensorik</div>
+                    </div>
+
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Level Variasi Struktur Kalimat</span>
+                            <span id="news-variety-value">Tinggi</span>
+                        </div>
+                        <input type="range" id="news-variety" min="1" max="3" value="3" step="1">
+                        <div class="help-text" style="margin-top: 5px;">Hindari pola kalimat yang monoton dan repetitif</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="news-transition" checked style="width: auto; margin-right: 5px;">
+                            Gunakan Transisi Natural Antar Paragraf
+                        </label>
+                        <div class="help-text">Membuat alur berita lebih mengalir dan tidak kaku</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Judul Berita / Topik *</label>
+                    <input type="text" id="news-title" placeholder="Contoh: Peluncuran Produk Baru XYZ di Jakarta">
+                    <div class="help-text">Masukkan judul atau topik berita yang ingin ditulis</div>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        Keyword Utama (Untuk Optimasi SEO)
+                        <span class="keyword-badge">PENTING</span>
+                    </label>
+                    <input type="text" id="news-keyword" placeholder="Contoh: peluncuran produk, teknologi baru, Jakarta 2024">
+                    <div class="help-text">Keyword akan diintegrasikan natural di lead paragraph, subjudul, dan body berita</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Informasi Dasar Berita (5W+1H)</label>
+                    <textarea id="news-context" placeholder="Berikan informasi dasar:&#10;- What (Apa yang terjadi)&#10;- Who (Siapa yang terlibat)&#10;- When (Kapan terjadi)&#10;- Where (Di mana terjadi)&#10;- Why (Mengapa terjadi)&#10;- How (Bagaimana prosesnya)"></textarea>
+                    <div class="help-text">Berikan konteks berita sedetail mungkin</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Gaya Penulisan Berita</label>
+                    <select id="news-style">
+                        <option value="formal">Formal (Media Massa)</option>
+                        <option value="semiformal" selected>Semi-Formal (Online Media)</option>
+                        <option value="casual">Casual (Blog Berita)</option>
+                    </select>
+                    <div class="help-text">Pilih tone penulisan sesuai platform publikasi</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Target Panjang Berita</label>
+                    <select id="news-length">
+                        <option value="300">Singkat (300 kata)</option>
+                        <option value="500" selected>Medium (500 kata)</option>
+                        <option value="800">Detail (800 kata)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Elemen Tambahan yang Diinginkan</label>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="news-quote" value="quote">
+                            <label for="news-quote">Quote Narasumber</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="news-data" value="data">
+                            <label for="news-data">Data Statistik</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="news-timeline" value="timeline">
+                            <label for="news-timeline">Timeline Kejadian</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="news-image" value="image">
+                            <label for="news-image">Placeholder Gambar</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="btn-generate-news">✨ Generate Prompt</button>
+                    <button class="btn btn-secondary" id="btn-copy-news">📋 Copy Prompt</button>
+                    <button class="btn btn-clear" id="btn-clear-news">🗑️ Clear</button>
+                </div>
+
+                <div class="output-section" id="news-output">
+                    <h3>📄 Prompt yang Dihasilkan</h3>
+                    <div class="output-box" id="news-result"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        ✅ Prompt berhasil disalin ke clipboard!
+    </div>
+
+    <script>
+        // Update slider values
+        document.getElementById('blog-variety').addEventListener('input', function() {
+            const labels = ['Rendah', 'Sedang', 'Tinggi'];
+            document.getElementById('blog-variety-value').textContent = labels[this.value - 1];
         });
-        
-        return () => observer.disconnect();
-      }, [headings]);
-      
-      const scrollToHeading = (index) => {
-        const element = document.getElementById(`heading-${index}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      };
-      
-      if (headings.length === 0) return null;
-      
-      return (
-        <div className="sticky top-24">
-          <h3 className="font-semibold text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-4">
-            Daftar Isi
-          </h3>
-          <nav className="space-y-2">
-            {headings.map((heading, index) => (
-              <button
-                key={heading.id}
-                onClick={() => scrollToHeading(index)}
-                className={`block text-left text-sm transition-all duration-200 hover:text-primary toc-link ${
-                  activeId === heading.id ? 'active' : 'text-gray-600 dark:text-gray-400 border-l-2 border-transparent pl-3'
-                }`}
-              >
-                {heading.text}
-              </button>
-            ))}
-          </nav>
-        </div>
-      );
-    };
-    
-    // Reading Time Calculator
-    const ReadingTime = ({ content }) => {
-      const [readingTime, setReadingTime] = useState(0);
-      
-      useEffect(() => {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(content, 'text/html');
-        const text = doc.body.textContent || '';
-        const wordCount = text.trim().split(/\s+/).length;
-        const minutes = Math.ceil(wordCount / 200);
-        setReadingTime(minutes);
-      }, [content]);
-      
-      return (
-        <span className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
-          <i data-lucide="clock" className="w-4 h-4"></i>
-          {readingTime} menit baca
-        </span>
-      );
-    };
-    
-    // Content Processor (inject IDs and ads)
-    const ProcessedContent = ({ content }) => {
-      const contentRef = useRef(null);
-      
-      useEffect(() => {
-        if (contentRef.current) {
-          // Add IDs to h2 elements
-          const h2Elements = contentRef.current.querySelectorAll('h2');
-          h2Elements.forEach((h2, index) => {
-            h2.id = `heading-${index}`;
-          });
-          
-          // Inject ads after 2nd and 5th paragraph
-          const paragraphs = contentRef.current.querySelectorAll('p');
-          const adPositions = [2, 5];
-          
-          adPositions.forEach((pos, idx) => {
-            if (paragraphs[pos]) {
-              const adPlaceholder = document.createElement('div');
-              adPlaceholder.className = 'my-8 p-6 bg-gray-100 dark:bg-gray-800 rounded-xl text-center';
-              adPlaceholder.innerHTML = `
-                <span class="text-xs text-gray-500 uppercase tracking-wider">Iklan</span>
-                <div class="mt-2 text-gray-400">Ad Placeholder ${idx + 1}</div>
-              `;
-              paragraphs[pos].after(adPlaceholder);
-            }
-          });
-          
-          // Re-run Prism highlighting
-          if (window.Prism) {
-            window.Prism.highlightAllUnder(contentRef.current);
-          }
-          
-          // Initialize Lucide icons in content
-          if (window.lucide) {
-            window.lucide.createIcons({
-              attrs: {
-                'stroke-width': 2,
-              },
-              nameAttr: 'data-lucide',
+
+        document.getElementById('blog-emotion').addEventListener('input', function() {
+            const labels = ['Rendah', 'Sedang', 'Tinggi'];
+            document.getElementById('blog-emotion-value').textContent = labels[this.value - 1];
+        });
+
+        document.getElementById('news-variety').addEventListener('input', function() {
+            const labels = ['Rendah', 'Sedang', 'Tinggi'];
+            document.getElementById('news-variety-value').textContent = labels[this.value - 1];
+        });
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                this.classList.add('active');
+                document.getElementById(this.dataset.tab).classList.add('active');
             });
-          }
+        });
+
+        // --- Fitur Otomatis Judul & Keyword ---
+
+        // Daftar kata umum (stop words) Bahasa Indonesia untuk diabaikan saat mencari keyword
+        const stopWords = [
+            'ada', 'adalah', 'adanya', 'adapun', 'agak', 'agaknya', 'agar', 'akan', 'akankah', 'akhir', 'akhiri', 'akhirnya', 'aku', 'akulah',
+            'amat', 'amatlah', 'anda', 'andalah', 'antar', 'antara', 'antaranya', 'apa', 'apaan', 'apabila', 'apakah', 'apalagi', 'apatah',
+            'artinya', 'asal', 'asalkan', 'atas', 'atau', 'ataukah', 'ataupun', 'awal', 'awalnya', 'bagai', 'bagaikan', 'bagaimana',
+            'bagaimanakah', 'bagaimanapun', 'bagi', 'bagian', 'bahkan', 'bahwa', 'bahwasanya', 'baik', 'bakal', 'bakalan', 'balik', 'banyak',
+            'bapak', 'baru', 'bawah', 'beberapa', 'begini', 'beginian', 'beginikah', 'beginilah', 'begitu', 'begitukah', 'begitulah',
+            'begitupun', 'bekerja', 'belakang', 'belakangan', 'belum', 'belumlah', 'benar', 'benarkah', 'benarlah', 'berada', 'berakhir',
+            'berakhirlah', 'berakhirnya', 'berapa', 'berapakah', 'berapalah', 'berapapun', 'berarti', 'berawal', 'berbagai', 'berdatangan',
+            'beri', 'berikan', 'berikut', 'berikutnya', 'berjumlah', 'berkali-kali', 'berkata', 'berkehendak', 'berkeinginan', 'berkenaan',
+            'berlainan', 'berlalu', 'berlangsung', 'berlebihan', 'bermacam', 'bermacam-macam', 'bermaksud', 'bermula', 'bersama', 'bersama-sama',
+            'bersiap', 'bersiap-siap', 'bertanya', 'bertanya-tanya', 'berturut', 'berturut-turut', 'bertutur', 'berujar', 'berupa', 'besar',
+            'betul', 'betulkah', 'biasa', 'biasanya', 'bila', 'bilakah', 'bisa', 'bisakah', 'boleh', 'bolehkah', 'bolehlah', 'buat', 'bukan',
+            'bukankah', 'bukanlah', 'bukannya', 'bulan', 'bung', 'cara', 'caranya', 'cukup', 'cukupkah', 'cukuplah', 'cuma', 'dahulu',
+            'dalam', 'dan', 'dapat', 'dari', 'daripada', 'datang', 'demi', 'demikian', 'demikianlah', 'dengan', 'depan', 'di', 'dia',
+            'diakhiri', 'diakhirinya', 'dialah', 'diantara', 'diantaranya', 'diberi', 'diberikan', 'diberikannya', 'dibuat', 'dibuatnya',
+            'didapat', 'didatangkan', 'digunakan', 'diibaratkan', 'diibaratkannya', 'diingat', 'diingatkan', 'diinginkan', 'dijawab',
+            'dijelaskan', 'dijelaskannya', 'dikarenakan', 'dikatakan', 'dikatakannya', 'dikerjakan', 'diketahui', 'diketahuinya',
+            'dikerjakan', 'dikirim', 'dilakukan', 'dilalui', 'dilihat', 'dimaksud', 'dimaksudkan', 'dimaksudkannya', 'dimaksudnya',
+            'diminta', 'dimintai', 'dimisalkan', 'dimulai', 'dimulailah', 'dimulainya', 'dimungkinkan', 'dini', 'dipastikan', 'diperbuat',
+            'diperbuatnya', 'dipergunakan', 'diperkirakan', 'diperlihatkan', 'diperlukan', 'diperlukannya', 'dipersoalkan', 'dipertanyakan',
+            'dipunyai', 'diri', 'dirinya', 'disampaikan', 'disebut', 'disebutkan', 'disebutkannya', 'disini', 'disinilah', 'ditambahkan',
+            'ditandaskan', 'ditanya', 'ditanyai', 'ditanyakan', 'ditegaskan', 'ditujukan', 'ditunjuk', 'ditunjuki', 'ditunjukkan',
+            'ditunjukkannya', 'dituturkan', 'dituturkannya', 'diucapkan', 'diucapkannya', 'diungkapkan', 'dong', 'dua', 'dulu', 'enggak',
+            'enggaknya', 'entah', 'entahlah', 'guna', 'gunakan', 'hal', 'hampir', 'hanya', 'hanyalah', 'hari', 'harus', 'haruslah',
+            'harusnya', 'hendak', 'hendaklah', 'hendaknya', 'hingga', 'ia', 'ialah', 'ibu', 'ikut', 'ingat', 'ingat-ingat', 'ini', 'inikah',
+            'inilah', 'itu', 'itukah', 'itulah', 'jadi', 'jadilah', 'jadinya', 'jangan', 'jangankan', 'janganlah', 'jauh', 'jawab',
+            'jawaban', 'jawabnya', 'jelas', 'jelaskan', 'jelaslah', 'jelasnya', 'jika', 'jikalau', 'juga', 'jumlah', 'jumlahnya', 'justru',
+            'kala', 'kalau', 'kalaulah', 'kalaupun', 'kalian', 'kami', 'kamilah', 'kamu', 'kamulah', 'kan', 'kapan', 'kapankah', 'kapanpun',
+            'karena', 'karenanya', 'kasus', 'kata', 'katakan', 'katakanlah', 'katanya', 'ke', 'keadaan', 'kebetulan', 'kecil', 'kedua',
+            'keduanya', 'keinginan', 'kelak', 'kelima', 'keluar', 'kembali', 'kemudian', 'kemungkinan', 'kemungkinannya', 'kenapa',
+            'kepada', 'kepadanya', 'kesampaian', 'keseluruhan', 'keseluruhannya', 'keterlaluan', 'ketika', 'khususnya', 'kini', 'kinilah',
+            'kira', 'kira-kira', 'kiranya', 'kita', 'kitalah', 'kok', 'kurang', 'lagi', 'lagian', 'lah', 'lain', 'lainnya', 'lalu', 'lama',
+            'lamanya', 'lanjut', 'lanjutnya', 'lebih', 'lewat', 'lima', 'luar', 'macam', 'maka', 'makanya', 'makin', 'malah', 'malahan',
+            'mampu', 'mampukah', 'mana', 'manakala', 'manalagi', 'masa', 'masalah', 'masalahnya', 'masih', 'masihkah', 'masing-masing', 'mau',
+            'maupun', 'melainkan', 'melakukan', 'melalui', 'melihat', 'melihatnya', 'memang', 'memastikan', 'memberi', 'memberikan', 'membuat',
+            'memerlukan', 'memihak', 'meminta', 'memintakan', 'memisalkan', 'memperbuat', 'mempergunakan', 'memperkirakan', 'memperlihatkan',
+            'mempersiapkan', 'mempersoalkan', 'mempertanyakan', 'mempunyai', 'memulai', 'memungkinkan', 'menaiki', 'menandaskan', 'menanti',
+            'menanti-nanti', 'menantikan', 'menanya', 'menanyai', 'menanyakan', 'mendapat', 'mendapatkan', 'mendatang', 'mendatangi',
+            'mendatangkan', 'menegaskan', 'mengakhiri', 'mengapa', 'mengatakan', 'mengatakannya', 'mengenai', 'mengerjakan', 'mengetahui',
+            'menggunakan', 'menghendaki', 'mengibaratkan', 'mengibaratkannya', 'mengingat', 'mengingatkan', 'menginginkan', 'mengira',
+            'mengucapkan', 'mengucapkannya', 'mengungkapkan', 'menjadi', 'menjawab', 'menjelaskan', 'menuju', 'menunjuk', 'menunjuki',
+            'menunjukkan', 'menurut', 'menuturkan', 'menyampaikan', 'menyangkut', 'menyatakan', 'menyebutkan', 'menyeluruh', 'menyiapkan',
+            'merasa', 'mereka', 'merekalah', 'merupakan', 'meski', 'meskipun', 'meyakini', 'meyakinkan', 'minta', 'mirip', 'misal', 'misalkan',
+            'misalnya', 'mula', 'mulai', 'mulailah', 'mulanya', 'mungkin', 'mungkinkah', 'nah', 'naik', 'namun', 'nanti', 'nantinya', 'nyaris',
+            'nyatanya', 'oleh', 'olehnya', 'pada', 'padahal', 'padanya', 'pak', 'paling', 'panjang', 'pantas', 'para', 'pasti', 'pastilah',
+            'penting', 'pentingnya', 'per', 'percuma', 'perlu', 'perlukah', 'perlunya', 'pernah', 'persoalan', 'pertama', 'pertama-tama',
+            'pertanyaan', 'pertanyakan', 'pihak', 'pihaknya', 'pukul', 'pula', 'pun', 'punya', 'rasa', 'rasanya', 'rata', 'rupanya', 'saat',
+            'saatnya', 'saja', 'sajalah', 'saling', 'sama', 'sama-sama', 'sambil', 'sampai', 'sampai-sampai', 'sampaikan', 'sana', 'sangat',
+            'sangatlah', 'sangkut', 'satu', 'saya', 'sayalah', 'se', 'sebab', 'sebabnya', 'sebagai', 'sebagaimana', 'sebagainya', 'sebagian',
+            'sebaik', 'sebaik-baiknya', 'sebaiknya', 'sebaliknya', 'sebanyak', 'sebelum', 'sebelumnya', 'sebenarnya', 'seberapa', 'sebesar',
+            'sebetulnya', 'sebisanya', 'sebuah', 'sebut', 'sebutlah', 'sebutnya', 'secara', 'secukupnya', 'sedang', 'sedangkan', 'sedemikian',
+            'sedikit', 'sedikitnya', 'seenaknya', 'segala', 'segalanya', 'segera', 'seharusnya', 'sehingga', 'seingat', 'sejak', 'sejauh',
+            'sejenak', 'sejumlah', 'sekadar', 'sekadarnya', 'sekali', 'sekali-kali', 'sekalian', 'sekaligus', 'sekalipun', 'sekarang',
+            'sekaranglah', 'sekecil', 'seketika', 'sekiranya', 'sekitar', 'sekitarnya', 'sela', 'selain', 'selaku', 'selalu', 'selama',
+            'selama-lamanya', 'selamanya', 'selanjutnya', 'seluruh', 'seluruhnya', 'semacam', 'semakin', 'semampu', 'semampunya', 'semasa',
+            'semasih', 'semata', 'semata-mata', 'semaunya', 'sementara', 'semisal', 'semisalnya', 'sempat', 'semua', 'semuanya', 'semula',
+            'sendiri', 'sendirian', 'sendirinya', 'seolah', 'seolah-olah', 'seorang', 'sepanjang', 'sepantasnya', 'sepantasnyalah', 'seperlunya',
+            'seperti', 'sepertinya', 'sepeserpun', 'sering', 'seringnya', 'serta', 'serupa', 'sesaat', 'sesampai', 'sesegera', 'sesekali',
+            'seseorang', 'sesuatu', 'sesuatunya', 'sesudah', 'sesudahnya', 'setelah', 'setempat', 'setengah', 'seterusnya', 'setiap', 'setiba',
+            'setibanya', 'setidak-tidaknya', 'setidaknya', 'setinggi', 'seusai', 'sih', 'siap', 'siapa', 'siapakah', 'siapapun', 'sini',
+            'sinilah', 'soal', 'soalnya', 'suatu', 'sudah', 'sudahkah', 'sudahlah', 'supaya', 'tadi', 'tadinya', 'tahu', 'tahun', 'tak',
+            'tama', 'tambah', 'tambahnya', 'tampak', 'tampaknya', 'tandas', 'tandasnya', 'tanpa', 'tanya', 'tanyakan', 'tanyanya', 'tapi',
+            'tegas', 'tegasnya', 'telah', 'tempat', 'tengah', 'tentang', 'tentu', 'tentulah', 'tentunya', 'tepat', 'terakhir', 'terasa',
+            'terbanyak', 'terdahulu', 'terdapat', 'terdiri', 'terhadap', 'terhadapnya', 'teringat', 'teringat-ingat', 'terjadi', 'terjadilah',
+            'terjadinya', 'terkira', 'terlalu', 'terlebih', 'terlihat', 'termasuk', 'ternyata', 'terpaksa', 'terserah', 'tertentu', 'tertuju',
+            'terus', 'terutama', 'tetap', 'tetapi', 'tiap', 'tiba', 'tiba-tiba', 'tidak', 'tidakkah', 'tidaklah', 'tiga', 'toh', 'turut',
+            'ucap', 'ucapnya', 'ujar', 'ujarnya', 'umum', 'umumnya', 'ungkap', 'ungkapnya', 'untuk', 'usah', 'usai', 'waduh', 'wah', 'wahai',
+            'waktu', 'waktunya', 'walau', 'walaupun', 'wong', 'yaitu', 'yakin', 'yakni', 'yang'
+        ];
+
+        function extractKeywords(text, count) {
+            if (!text) return [];
+            const words = text.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/);
+            const wordFrequencies = {};
+            for (const word of words) {
+                if (!stopWords.includes(word) && word.length > 3) {
+                    wordFrequencies[word] = (wordFrequencies[word] || 0) + 1;
+                }
+            }
+            const sortedKeywords = Object.keys(wordFrequencies).sort((a, b) => wordFrequencies[b] - wordFrequencies[a]);
+            return sortedKeywords.slice(0, count);
         }
-      }, [content]);
-      
-      return (
-        <div 
-          ref={contentRef}
-          className="prose-custom"
-          dangerouslySetInnerHTML={{ __html: content }}
-        />
-      );
-    };
-    
-    // Related Posts
-    const RelatedPosts = ({ currentPost, allPosts, navigateTo }) => {
-      const currentCategory = currentPost.category || currentPost.label;
-      const related = allPosts
-        .filter(p => 
-          (p.type === 'post' || p.type === 'blog') && 
-          p.id !== currentPost.id && 
-          (p.category === currentCategory || p.label === currentCategory)
-        )
-        .slice(0, 3);
-      
-      if (related.length === 0) return null;
-      
-      return (
-        <div className="mt-16 pt-8 border-t border-gray-200 dark:border-gray-700">
-          <h3 className="text-2xl font-bold mb-6">Artikel Terkait</h3>
-          <div className="grid md:grid-cols-3 gap-6">
-            {related.map((post) => (
-              <button
-                key={post.id}
-                onClick={() => navigateTo(post.slug)}
-                className="text-left group"
-              >
-                <div className="aspect-video rounded-xl overflow-hidden mb-4">
-                  <img 
-                    src={post.image_url} 
-                    alt={post.title}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                </div>
-                <span className="text-xs font-medium text-primary uppercase tracking-wider">
-                  {post.category || post.label}
-                </span>
-                <h4 className="font-semibold mt-1 group-hover:text-primary transition-colors">
-                  {post.title}
-                </h4>
-              </button>
-            ))}
-          </div>
-        </div>
-      );
-    };
-    
-    // Post Card
-    const PostCard = ({ post, navigateTo }) => {
-      const category = post.category || post.label || '';
-      return (
-        <button
-          onClick={() => navigateTo(post.slug)}
-          className="text-left card-hover bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg"
-        >
-          <div className="aspect-video overflow-hidden">
-            <img 
-              src={post.image_url} 
-              alt={post.title}
-              className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-            />
-          </div>
-          <div className="p-6">
-            <div className="flex items-center gap-3 mb-3">
-              {category && (
-                <span className="px-3 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full">
-                  {category}
-                </span>
-              )}
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {post.date ? new Date(post.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : ''}
-              </span>
-            </div>
-            <h3 className="text-xl font-bold mb-2 line-clamp-2 hover:text-primary transition-colors">
-              {post.title}
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3">
-              {post.description}
-            </p>
-          </div>
-        </button>
-      );
-    };
-    
-    // Layout: Grid (Home)
-    const GridLayout = ({ posts, navigateTo }) => {
-      // Filter posts dengan tipe 'post' atau 'blog'
-      const publishedPosts = posts.filter(p => 
-        (p.type === 'post' || p.type === 'blog') && 
-        p.status === 'published'
-      );
-      
-      return (
-        <div className="animate-fade-in">
-          {/* Hero Section */}
-          <section className="relative py-24 lg:py-32 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"></div>
-            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <h1 className="text-4xl md:text-6xl font-bold mb-6">
-                <span className="italic text-primary">SheetStudio</span>
-              </h1>
-              <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-8">
-                Headless CMS modern yang menggunakan Google Sheets sebagai database. 
-                Kelola konten dengan mudah, tampilkan dengan elegan.
-              </p>
-              <div className="flex flex-wrap justify-center gap-4">
-                {publishedPosts.length > 0 && (
-                  <button 
-                    onClick={() => navigateTo(publishedPosts[0].slug)}
-                    className="px-8 py-3 bg-primary text-white rounded-full font-medium hover:opacity-90 transition-opacity"
-                  >
-                    Mulai Sekarang
-                  </button>
-                )}
-                <a 
-                  href="https://github.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-8 py-3 border-2 border-gray-300 dark:border-gray-700 rounded-full font-medium hover:border-primary hover:text-primary transition-colors"
-                >
-                  Lihat di GitHub
-                </a>
-              </div>
-            </div>
-          </section>
-          
-          {/* Posts Grid */}
-          {publishedPosts.length > 0 && (
-            <section className="py-16 bg-gray-100 dark:bg-gray-800/50">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-2xl font-bold">Artikel Terbaru</h2>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {publishedPosts.length} artikel
-                  </span>
-                </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {publishedPosts.map((post) => (
-                    <PostCard key={post.id} post={post} navigateTo={navigateTo} />
-                  ))}
-                </div>
-              </div>
-            </section>
-          )}
-          
-          {/* Features */}
-          <section className="py-16">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <h2 className="text-3xl font-bold text-center mb-12">Fitur Unggulan</h2>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                {[
-                  { icon: 'database', title: 'Google Sheets', desc: 'Database yang familiar dan collaborative' },
-                  { icon: 'zap', title: 'Real-time', desc: 'Perubahan langsung terlihat di website' },
-                  { icon: 'palette', title: '8 Tema Warna', desc: 'Kustomisasi sesuai brand Anda' },
-                  { icon: 'moon', title: 'Dark Mode', desc: 'Mendukung preferensi sistem' },
-                ].map((feature, idx) => (
-                  <div key={idx} className="text-center p-6">
-                    <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                      <i data-lucide={feature.icon} className="w-7 h-7 text-primary"></i>
-                    </div>
-                    <h3 className="font-semibold mb-2">{feature.title}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{feature.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        </div>
-      );
-    };
-    
-    // Layout: Post
-    const PostLayout = ({ post, allPosts, navigateTo }) => {
-      const category = post.category || post.label || '';
-      return (
-        <div className="animate-fade-in">
-          {/* Hero Image */}
-          <div className="relative h-[50vh] min-h-[400px]">
-            <img 
-              src={post.image_url} 
-              alt={post.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
-            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-8">
-              <div className="max-w-4xl mx-auto">
-                {category && (
-                  <span className="inline-block px-3 py-1 bg-primary text-white text-sm font-medium rounded-full mb-4">
-                    {category}
-                  </span>
-                )}
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-                  {post.title}
-                </h1>
-                <div className="flex flex-wrap items-center gap-4 text-white/80">
-                  <span className="flex items-center gap-1">
-                    <i data-lucide="calendar" className="w-4 h-4"></i>
-                    {post.date ? new Date(post.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
-                  </span>
-                  <ReadingTime content={post.content} />
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Content */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="grid lg:grid-cols-4 gap-12">
-              {/* Sidebar ToC */}
-              <aside className="hidden lg:block">
-                <TableOfContents content={post.content} />
-              </aside>
-              
-              {/* Main Content */}
-              <article className="lg:col-span-3 max-w-3xl">
-                <ProcessedContent content={post.content} />
-                <RelatedPosts currentPost={post} allPosts={allPosts} navigateTo={navigateTo} />
-              </article>
-            </div>
-          </div>
-        </div>
-      );
-    };
-    
-    // Layout: Page
-    const PageLayout = ({ page }) => {
-      return (
-        <div className="animate-fade-in pt-24 pb-16">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            {page.title !== 'Beranda' && (
-              <h1 className="text-4xl font-bold text-center mb-8">{page.title}</h1>
-            )}
-            <div dangerouslySetInnerHTML={{ __html: page.content }} />
-          </div>
-        </div>
-      );
-    };
-    
-    // 404 Page
-    const NotFound = ({ navigateTo }) => {
-      return (
-        <div className="min-h-screen flex items-center justify-center animate-fade-in">
-          <div className="text-center">
-            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <i data-lucide="file-x" className="w-12 h-12 text-primary"></i>
-            </div>
-            <h1 className="text-6xl font-bold mb-4">404</h1>
-            <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
-              Halaman tidak ditemukan
-            </p>
-            <button
-              onClick={() => navigateTo('')}
-              className="px-6 py-3 bg-primary text-white rounded-full font-medium hover:opacity-90 transition-opacity"
-            >
-              Kembali ke Beranda
-            </button>
-          </div>
-        </div>
-      );
-    };
-    
-    // Footer
-    const Footer = () => {
-      return (
-        <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="grid md:grid-cols-4 gap-8">
-              <div className="md:col-span-2">
-                <span className="text-2xl font-bold italic text-primary">SheetStudio</span>
-                <p className="mt-4 text-gray-600 dark:text-gray-400 max-w-sm">
-                  Headless CMS modern yang menggunakan Google Sheets sebagai database. 
-                  Kelola konten dengan mudah, tampilkan dengan elegan.
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-4">Menu</h4>
-                <ul className="space-y-2 text-gray-600 dark:text-gray-400">
-                  <li><a href="/" className="hover:text-primary transition-colors">Beranda</a></li>
-                  <li><a href="/tentang-kami" className="hover:text-primary transition-colors">Tentang</a></li>
-                  <li><a href="/kontak" className="hover:text-primary transition-colors">Kontak</a></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-4">Sosial</h4>
-                <div className="flex gap-4">
-                  <a href="#" className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-primary hover:text-white transition-colors">
-                    <i data-lucide="twitter" className="w-5 h-5"></i>
-                  </a>
-                  <a href="#" className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-primary hover:text-white transition-colors">
-                    <i data-lucide="github" className="w-5 h-5"></i>
-                  </a>
-                  <a href="#" className="p-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-primary hover:text-white transition-colors">
-                    <i data-lucide="linkedin" className="w-5 h-5"></i>
-                  </a>
-                </div>
-              </div>
-            </div>
-            <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700 text-center text-gray-500 dark:text-gray-400 text-sm">
-              © {new Date().getFullYear()} SheetStudio. Built with ❤️ using Google Sheets.
-            </div>
-          </div>
-        </footer>
-      );
-    };
-    
-    // ============================================
-    // MAIN APP
-    // ============================================
-    const App = () => {
-      const [currentPage, setCurrentPage] = useState('');
-      const [posts, setPosts] = useState([]);
-      const [loading, setLoading] = useState(true);
-      
-      // Load data from API
-      useEffect(() => {
-        const fetchData = async () => {
-          try {
-            const response = await fetch(API_URL);
-            const result = await response.json();
-            if (result.success && result.data) {
-              setPosts(result.data);
+
+        // --- NEW FEATURE START ---
+        /**
+         * Fungsi untuk memilih gaya tulisan secara otomatis berdasarkan konten draft.
+         * @param {string} text - Teks draft artikel.
+         * @returns {string} - Value dari gaya tulisan yang terdeteksi.
+         */
+        function autoSelectStyle(text) {
+            if (!text) return 'feature'; // Default jika tidak ada teks
+
+            const lowerCaseText = text.toLowerCase();
+
+            // Aturan deteksi berdasarkan kata kunci (dari yang paling spesifik ke umum)
+            if (/\b(ulasan|review|kelebihan|kekurangan|pro dan kontra|pro\/kontra)\b/i.test(lowerCaseText)) {
+                return 'review';
+            }
+            if (/\b(langkah-langkah|step-by-step|cara membuat|tutorial|bagaimana cara)\b/i.test(lowerCaseText)) {
+                return 'tutorial';
+            }
+            if ((/\d+\.\s+[A-Z]/).test(text) || /\b(tips|daftar|rekomendasi|list)\b/i.test(lowerCaseText)) {
+                // Pola: "1. Judul Poin" atau ada kata kunci listicle
+                return 'listicle';
+            }
+            if (/\b(menurut saya|pendapat saya|opini saya|saya percaya|argumen)\b/i.test(lowerCaseText)) {
+                return 'opini';
+            }
+            if (/\b(penelitian|studi|data menunjukkan|menurut studi|sitasi|riset)\b/i.test(lowerCaseText) || /\(.*\d{4}\)/.test(lowerCaseText)) {
+                return 'akademik';
+            }
+            if (/\b(melaporkan|terjadi pada|5w\+1h|wawancara|narasumber)\b/i.test(lowerCaseText)) {
+                return 'jurnalistik';
+            }
+            if (/\b(cerita|kisah|pada suatu hari|dia berkata|merasakan|suasana)\b/i.test(lowerCaseText)) {
+                return 'storytelling';
+            }
+
+            // Jika tidak ada yang cocok, gunakan 'feature' sebagai default yang aman
+            return 'feature';
+        }
+        // --- NEW FEATURE END ---
+
+        // Daftar gaya tulisan dengan instruksi spesifik
+        const writingStyles = {
+            tutorial: {
+                name: 'Tutorial/How-to',
+                structure: `
+### STRUKTUR TUTORIAL/HOW-TO:
+1. **Pembukaan**: Jelaskan masalah/kebutuhan yang akan diselesaikan
+2. **Requirements**: Apa yang dibutuhkan (tools, bahan, pengetahuan dasar)
+3. **Langkah-langkah**: Numbered steps yang jelas dan terurut
+4. **Tips & Troubleshooting**: Antisipasi masalah umum
+5. **Kesimpulan**: Rangkuman hasil akhir yang dicapai
+
+ATURAN KHUSUS:
+- Setiap step harus actionable dan spesifik
+- Gunakan imperative mood ("Lakukan X", "Klik Y")
+- Sertakan screenshot/gambar placeholder jika perlu
+- Tambahkan warning untuk langkah krusial
+- Berikan alternatif jika ada cara lain`,
+
+                tone: 'Instruksional namun friendly, seperti mentor yang sabar'
+            },
+            listicle: {
+                name: 'Listicle Engaging',
+                structure: `
+### STRUKTUR LISTICLE:
+1. **Intro**: Hook dengan angka dan promise value
+2. **List Items**: Setiap poin dengan subjudul menarik
+3. **Penjelasan per poin**: 2-3 paragraf per item
+4. **Takeaway**: Key insight di akhir setiap poin
+5. **Kesimpulan**: Recap semua poin
+
+ATURAN KHUSUS:
+- Judul numerik yang menarik (5 Cara, 10 Tips, 7 Rahasia)
+- Setiap poin bisa standalone (orang bisa skip)
+- Gunakan subheading deskriptif (bukan "Poin 1" tapi "Optimasi Meta Description")
+- Tambahkan visual/contoh di setiap poin
+- Urutkan dari yang paling penting/menarik`,
+
+                tone: 'Engaging dan scannable, info padat per poin'
+            },
+            feature: {
+                name: 'Feature/Soft Article',
+                structure: `
+### STRUKTUR FEATURE:
+1. **Lead**: Scene setting atau anekdot menarik
+2. **Nut Graf**: Jelaskan mengapa topik ini penting/relevan
+3. **Development**: Storytelling dengan detail dan deskripsi
+4. **Quotes**: Wawancara atau kutipan yang mendalam
+5. **Ending**: Circular back ke pembukaan atau takeaway emosional
+
+ATURAN KHUSUS:
+- Gunakan teknik show, don't tell
+- Detail sensorik dan deskriptif
+- Pace lebih lambat, tidak terburu-buru
+- Human interest angle
+- Karakter dan setting yang vivid`,
+
+                tone: 'Naratif, deskriptif, engaging secara emosional'
+            },
+            akademik: {
+                name: 'Akademik Populer',
+                structure: `
+### STRUKTUR AKADEMIK POPULER:
+1. **Abstrak informal**: Ringkasan topik dan temuan utama
+2. **Latar Belakang**: Konteks dan state of research
+3. **Analisis**: Breakdown konsep dengan data dan teori
+4. **Evidence**: Referensi, studi, statistik
+5. **Implikasi**: Apa artinya untuk pembaca
+
+ATURAN KHUSUS:
+- Gunakan terminologi akademik tapi jelaskan dengan bahasa sederhana
+- Sertakan sitasi (Author, Tahun) atau footnote
+- Data dan grafik untuk mendukung argumen
+- Balance antara depth dan accessibility
+- Hindari jargon tanpa penjelasan`,
+
+                tone: 'Authoritative tapi accessible, edukatif tanpa condescending'
+            },
+            opini: {
+                name: 'Opini/Esai',
+                structure: `
+### STRUKTUR OPINI/ESAI:
+1. **Thesis Statement**: Argumen utama Anda
+2. **Konteks**: Background issue yang dibahas
+3. **Argumen**: 3-4 poin pendukung dengan evidence
+4. **Counter-argument**: Akui sudut pandang lain
+5. **Conclusion**: Reaffirm thesis dengan call-to-action/reflection
+
+ATURAN KHUSUS:
+- Suara pribadi dan subjektif yang kuat
+- Gunakan "Saya percaya", "Menurut saya", "Pandangan saya"
+- Argumentasi logis dengan evidence
+- Persuasif tapi bukan propaganda
+- Boleh controversial tapi tetap respectful`,
+
+                tone: 'Assertive, passionate, tapi tetap reasoned'
+            },
+            review: {
+                name: 'Review/Ulasan',
+                structure: `
+### STRUKTUR REVIEW:
+1. **Overview**: Intro produk/layanan/konten yang direview
+2. **Criteria**: Jelaskan aspek apa yang dinilai
+3. **Pros & Cons**: Kelebihan dan kekurangan detail
+4. **Comparison**: Bandingkan dengan alternatif lain
+5. **Verdict**: Rekomendasi akhir dan rating
+
+ATURAN KHUSUS:
+- Berikan rating/score jika relevan
+- Objektif tapi dengan perspektif personal
+- Sertakan "Who should buy/use this?"
+- Gunakan tabel perbandingan jika ada
+- Transparansi tentang testing/experience Anda`,
+
+                tone: 'Evaluatif, balanced, helpful untuk keputusan'
+            },
+            storytelling: {
+                name: 'Storytelling Naratif',
+                structure: `
+### STRUKTUR STORYTELLING:
+1. **Hook**: Mulai in medias res atau moment dramatis
+2. **Setup**: Perkenalkan karakter, setting, situasi
+3. **Conflict**: Tantangan atau masalah yang dihadapi
+4. **Rising Action**: Perkembangan dan komplikasi
+5. **Resolution**: Penyelesaian dengan lesson learned
+
+ATURAN KHUSUS:
+- Fokus pada karakter dan emosi
+- Gunakan dialog untuk menghidupkan cerita
+- Detail sensorik dan imagery
+- Pace yang dinamis (cepat-lambat)
+- Lesson atau insight tersirat, bukan eksplisit`,
+
+                tone: 'Naratif, emosional, immersive'
+            },
+            jurnalistik: {
+                name: 'Jurnalistik Straight',
+                structure: `
+### STRUKTUR JURNALISTIK:
+1. **Lead**: 5W+1H dalam paragraf pertama
+2. **Body**: Piramida terbalik (info penting ke detail)
+3. **Quotes**: Kutipan narasumber
+4. **Context**: Background dan data pendukung
+5. **Conclusion**: Info tambahan atau outlook
+
+ATURAN KHUSUS:
+- Objektif dan faktual
+- Atribusi jelas untuk setiap klaim
+- Kalimat pendek dan langsung
+- Hindari opini pribadi
+- Verifikasi akurasi informasi`,
+
+                tone: 'Objektif, faktual, straight-to-the-point'
+            }
+        };
+
+        // Fungsi untuk mendapatkan instruksi kata panggil
+        function getPronounInstructions(pronouns) {
+            const pronounMap = {
+                'saya-anda': {
+                    first: 'Saya',
+                    second: 'Anda',
+                    desc: 'formal dan professional namun tetap friendly',
+                    examples: '"Saya akan menjelaskan...", "Anda bisa mencoba...", "Menurut saya...", "Apakah Anda pernah..."'
+                },
+                'gue-lo': {
+                    first: 'Gue',
+                    second: 'Lo',
+                    desc: 'casual dan santai seperti ngobrol dengan teman',
+                    examples: '"Gue mau jelasin...", "Lo bisa coba...", "Menurut gue...", "Lo pernah nggak..."'
+                },
+                'aku-kamu': {
+                    first: 'Aku',
+                    second: 'Kamu',
+                    desc: 'semi-formal yang warm dan personal',
+                    examples: '"Aku akan bagikan...", "Kamu bisa mencoba...", "Menurutku...", "Apa kamu pernah..."'
+                },
+                'saya-kamu': {
+                    first: 'Saya',
+                    second: 'Kamu',
+                    desc: 'semi-formal mix yang balanced',
+                    examples: '"Saya akan berbagi...", "Kamu bisa coba...", "Menurut saya...", "Apakah kamu pernah..."'
+                }
+            };
+            return pronounMap[pronouns];
+        }
+
+        // Generate Blog Prompt
+        function generateBlogPrompt() {
+            // --- Fitur Otomatis Judul & Keyword ---
+            let title = document.getElementById('blog-title').value.trim();
+            let keyword = document.getElementById('blog-keyword').value.trim();
+            const draft = document.getElementById('blog-draft').value.trim();
+
+            if (!title && draft) {
+                const suggestedTitle = draft.split(/\s+/).slice(0, 10).join(' ') + '...';
+                document.getElementById('blog-title').value = suggestedTitle;
+                title = suggestedTitle;
+                if (!keyword) {
+                    const suggestedKeywords = extractKeywords(draft, 3).join(', ');
+                    document.getElementById('blog-keyword').value = suggestedKeywords;
+                    keyword = suggestedKeywords;
+                }
+                alert("Judul dan Keyword telah dibuat secara otomatis berdasarkan Draft Artikel Anda. Silakan periksa atau ubah jika perlu.");
+            }
+
+            // --- NEW FEATURE START: Logika Pemilihan Gaya Otomatis ---
+            let style;
+            const isAutoStyle = document.getElementById('blog-style-auto').checked;
+
+            if (isAutoStyle) {
+                if (!draft) {
+                    alert('Untuk memilih gaya otomatis, mohon isi bagian "Draft Artikel / Context" terlebih dahulu!');
+                    return;
+                }
+                style = autoSelectStyle(draft);
+                // Beri tahu pengguna gaya apa yang dipilih
+                const selectedStyleName = writingStyles[style].name;
+                alert(`Gaya tulisan telah dipilih secara otomatis: "${selectedStyleName}".\nAnda bisa memilih gaya lain secara manual jika tidak sesuai.`);
             } else {
-              console.error('API Error:', result.error);
-              setPosts([]);
+                style = document.querySelector('input[name="blog-style"]:checked').value;
             }
-          } catch (error) {
-            console.error('Fetch Error:', error);
-            setPosts([]);
-          } finally {
-            setLoading(false);
-          }
-        };
-        fetchData();
-      }, []);
-      
-      // Handle routing
-      useEffect(() => {
-        const path = window.location.pathname.slice(1);
-        setCurrentPage(path);
-      }, []);
-      
-      const navigateTo = (slug) => {
-        setCurrentPage(slug);
-        window.history.pushState({}, '', slug ? `/${slug}` : '/');
-        window.scrollTo(0, 0);
-      };
-      
-      // Handle browser back/forward
-      useEffect(() => {
-        const handlePopState = () => {
-          const path = window.location.pathname.slice(1);
-          setCurrentPage(path);
-        };
-        window.addEventListener('popstate', handlePopState);
-        return () => window.removeEventListener('popstate', handlePopState);
-      }, []);
-      
-      // Update meta tags
-      useEffect(() => {
-        const currentPost = posts.find(p => p.slug === currentPage);
-        if (currentPost) {
-          document.title = `${currentPost.title} | SheetStudio`;
-          
-          // Update meta description
-          let metaDesc = document.querySelector('meta[name="description"]');
-          if (!metaDesc) {
-            metaDesc = document.createElement('meta');
-            metaDesc.setAttribute('name', 'description');
-            document.head.appendChild(metaDesc);
-          }
-          metaDesc.setAttribute('content', currentPost.description);
-          
-          // Update Open Graph
-          let ogTitle = document.querySelector('meta[property="og:title"]');
-          if (!ogTitle) {
-            ogTitle = document.createElement('meta');
-            ogTitle.setAttribute('property', 'og:title');
-            document.head.appendChild(ogTitle);
-          }
-          ogTitle.setAttribute('content', currentPost.title);
-          
-          let ogDesc = document.querySelector('meta[property="og:description"]');
-          if (!ogDesc) {
-            ogDesc = document.createElement('meta');
-            ogDesc.setAttribute('property', 'og:description');
-            document.head.appendChild(ogDesc);
-          }
-          ogDesc.setAttribute('content', currentPost.description);
-          
-          if (currentPost.image_url) {
-            let ogImage = document.querySelector('meta[property="og:image"]');
-            if (!ogImage) {
-              ogImage = document.createElement('meta');
-              ogImage.setAttribute('property', 'og:image');
-              document.head.appendChild(ogImage);
+            // --- NEW FEATURE END ---
+
+            const length = document.getElementById('blog-length').value;
+            const pronouns = document.getElementById('blog-pronouns').value;
+            
+            const personalOpinion = document.getElementById('blog-personal-opinion').checked;
+            const conversational = document.getElementById('blog-conversational').checked;
+            const variety = document.getElementById('blog-variety').value;
+            const emotion = document.getElementById('blog-emotion').value;
+            const rhetorical = document.getElementById('blog-rhetorical').checked;
+            const imperfect = document.getElementById('blog-imperfect').checked;
+            
+            if (!title) {
+                alert('Mohon masukkan Judul Artikel atau isi Draft Artikel terlebih dahulu!');
+                return;
             }
-            ogImage.setAttribute('content', currentPost.image_url);
-          }
-          
-          // Inject custom meta/scripts
-          if (currentPost.meta) {
-            const metaContainer = document.createElement('div');
-            metaContainer.innerHTML = currentPost.meta;
-            document.head.appendChild(metaContainer);
-          }
-        } else {
-          document.title = 'SheetStudio CMS';
+
+            const elements = [];
+            const elementsCode = {};
+            
+            if (document.getElementById('blog-table').checked) {
+                elements.push('tabel perbandingan');
+                elementsCode['table'] = `<div class="tg-wrap"><table border="1" class="tg"><thead><tr><th>Kolom 1</th><th>Kolom 2</th></tr></thead><tbody><tr><td>Data 1</td><td>Data 2</td></tr></tbody></table></div>`;
+            }
+            if (document.getElementById('blog-list').checked) {
+                elements.push('list/bullet points');
+                elementsCode['list'] = `<ul>\n  <li>Poin pertama</li>\n  <li>Poin kedua</li>\n  <li>Poin ketiga</li>\n</ul>`;
+            }
+            if (document.getElementById('blog-button').checked) {
+                elements.push('tombol CTA');
+                elementsCode['button'] = `<!-- Tombol Download -->\n<a class="btn-default btn-primary" href="#"><button>Download</button></a>\n\n<!-- Tombol WhatsApp -->\n<a class="btn-whatsapp btn-primary" href="#"><button>WhatsApp</button></a>\n\n<!-- Tombol Demo -->\n<a class="btn-new-tab btn-primary" href="#"><button>Demo</button></a>`;
+            }
+            if (document.getElementById('blog-notif').checked) {
+                elements.push('kotak notifikasi');
+                elementsCode['notif'] = `<!-- Info -->\n<div class='notification-box info'>Informasi penting di sini</div>\n\n<!-- Warning -->\n<div class='notification-box warning'>Peringatan untuk pembaca</div>\n\n<!-- Error -->\n<div class='notification-box error'>Pesan error atau bahaya</div>`;
+            }
+            if (document.getElementById('blog-image').checked) {
+                elements.push('grid gambar 3 kolom');
+                elementsCode['image'] = `<div class='grid-images three-col'>\n  <img src='https://tse1.mm.bing.net/th?q=keyword-gambar-1' alt='Deskripsi gambar 1'/>\n  <img src='https://tse1.mm.bing.net/th?q=keyword-gambar-2' alt='Deskripsi gambar 2'/>\n  <img src='https://tse1.mm.bing.net/th?q=keyword-gambar-3' alt='Deskripsi gambar 3'/>\n</div>`;
+            }
+            if (document.getElementById('blog-faq').checked) {
+                elements.push('accordion FAQ');
+                elementsCode['faq'] = `<div class="accordion-container">\n  <div class="accordion-toggle">Pertanyaan 1?</div>\n  <div class="accordion-content"><div>Jawaban untuk pertanyaan 1</div></div>\n  \n  <div class="accordion-toggle">Pertanyaan 2?</div>\n  <div class="accordion-content"><div>Jawaban untuk pertanyaan 2</div></div>\n</div>`;
+            }
+            if (document.getElementById('blog-slider').checked) {
+                elements.push('slider/carousel');
+                elementsCode['slider'] = `<div class='slider-container'>\n  <div class='slider-content'>\n    <img src='https://tse1.mm.bing.net/th?q=slide-1' alt='Slide 1'/>\n    <img src='https://tse1.mm.bing.net/th?q=slide-2' alt='Slide 2'/>\n    <img src='https://tse1.mm.bing.net/th?q=slide-3' alt='Slide 3'/>\n  </div>\n</div>`;
+            }
+            if (document.getElementById('blog-code').checked) {
+                elements.push('syntax highlighter');
+                elementsCode['code'] = `<pre><code class='lang-html'>&lt;h1&gt;Contoh Kode HTML&lt;/h1&gt;\n&lt;p&gt;Paragraf contoh&lt;/p&gt;</code></pre>\n\n<!-- Untuk bahasa lain gunakan lang-css, lang-js, lang-python, dll -->`;
+            }
+            if (document.getElementById('blog-youtube').checked) {
+                elements.push('lazy load YouTube');
+                elementsCode['youtube'] = `<div class="lazy-youtube" data-video-id="VIDEO_ID_YOUTUBE">\n  <div class="lazy-youtube-play"></div>\n</div>\n\n<!-- Ganti VIDEO_ID_YOUTUBE dengan ID video dari URL YouTube -->`;
+            }
+
+            const pronounInfo = getPronounInstructions(pronouns);
+            const styleInfo = writingStyles[style];
+
+            let prompt = `# INSTRUKSI PEMBUATAN ARTIKEL SEO ANTI-AI DETECTION
+
+## ROLE & CONTEXT
+Kamu adalah penulis artikel SEO profesional yang menulis seperti MANUSIA ASLI, bukan AI. Tulisanmu harus lolos dari AI detector dengan skor human-written minimal 90%.
+
+## TOPIK ARTIKEL
+Judul/Topik - ${title}`;
+
+            if (keyword) {
+                prompt += `
+
+## 🎯 KEYWORD TARGETING (PRIORITAS TINGGI!)
+Keyword Utama - ${keyword}
+
+WAJIB INTEGRASIKAN KEYWORD:
+1. **Di Judul** - Masukkan keyword utama secara natural (1x)
+2. **Meta Description** - Gunakan keyword di deskripsi (1x)
+3. **Paragraf Pertama** - Keyword muncul di 100 kata pertama (1x)
+4. **Subjudul (H2/H3)** - Gunakan keyword atau variasi di 2-3 subjudul
+5. **Body Artikel** - Sebarkan natural dengan density 1-2%
+6. **Alt Text Gambar** - Sertakan keyword di deskripsi gambar
+7. **Internal Linking** - Gunakan keyword sebagai anchor text jika relevan
+
+LSI KEYWORDS (gunakan variasi natural):
+- Sinonim dan related terms dari keyword utama
+- Long-tail variations
+- Semantic keywords yang relevan
+
+ATURAN KEYWORD:
+✅ Integrasikan secara NATURAL, jangan keyword stuffing
+✅ Kontekstual dan masuk akal dalam kalimat
+✅ Variasi bentuk kata (plural, verb form, dll)
+❌ JANGAN paksa keyword sampai kalimat jadi aneh
+❌ JANGAN ulang-ulang keyword di paragraf yang sama`;
+            }
+
+            prompt += `
+
+## 📝 GAYA TULISAN YANG DIPILIH
+**${styleInfo.name}**
+
+${styleInfo.structure}
+
+**TONE PENULISAN**: ${styleInfo.tone}`;
+
+            prompt += `
+
+## 👤 KATA PANGGIL (KONSISTENSI WAJIB!)
+Gunakan pasangan kata panggil ini di SELURUH artikel:
+- Orang Pertama - "${pronounInfo.first}"
+- Orang Kedua - "${pronounInfo.second}"
+
+Style - ${pronounInfo.desc}
+Contoh penggunaan - ${pronounInfo.examples}
+
+⚠️ CRITICAL - Gunakan KONSISTEN dari awal sampai akhir artikel!`;
+
+            prompt += `
+
+## SPESIFIKASI ARTIKEL
+- Panjang target - ${length} kata
+- Bahasa - 90-95% Bahasa Indonesia, 5-10% Bahasa Inggris umum
+- Tone - Sesuai gaya ${styleInfo.name}
+- Struktur - Gunakan HTML tanpa tag dokumen utama (tanpa <!DOCTYPE>, <html>, <head>, <body>)`;
+
+            // BAGIAN: Anti-AI Detection Instructions
+            prompt += `
+
+## 🛡️ INSTRUKSI ANTI-AI DETECTION (PRIORITAS TERTINGGI!)
+
+Tulisan yang HANYA berisi data dan fakta tanpa sentuhan personal akan 100% terdeteksi AI!
+
+### WAJIB DILAKUKAN`;
+
+            if (personalOpinion) {
+                prompt += `
+
+1. **SERTAKAN OPINI & PENGALAMAN PRIBADI**
+   - Mulai dengan perspektif personal menggunakan "${pronounInfo.first}"
+   - Contoh - "Menurut pengalaman ${pronounInfo.first}...", "Dari yang ${pronounInfo.first} amati...", "${pronounInfo.first} pernah mengalami..."
+   - Sisipkan pendapat subjektif di antara fakta objektif
+   - Bagikan anekdot atau cerita singkat yang relevan
+   - Ajak pembaca dengan "${pronounInfo.second}" - "Apakah ${pronounInfo.second} pernah...", "${pronounInfo.second} pasti tahu..."`;
+            }
+
+            if (conversational) {
+                prompt += `
+
+2. **GUNAKAN GAYA CONVERSATIONAL**
+   - Pakai "${pronounInfo.first}" dan "${pronounInfo.second}" secara natural
+   - Gunakan kontraksi - "nggak", "udah", "gak", "kok", "sih", "dong" (jika gaya casual)
+   - Sesekali ajak pembaca - "Pernah ngerasain hal ini?", "${pronounInfo.second} pasti tau kan..."
+   - Pakai bahasa sehari-hari - "Oke, jadi gini...", "Nah, ini dia yang menarik..."
+   - Contoh - "${pronounInfo.first} bakal jelasin cara simpel yang udah ${pronounInfo.first} praktikkin sendiri."`;
+            }
+
+            const varietyTexts = {
+                '1': 'Gunakan beberapa variasi panjang kalimat',
+                '2': 'Kombinasikan kalimat pendek (5-8 kata), sedang (10-15 kata), dan panjang (20+ kata)',
+                '3': 'Variasikan drastis - kalimat sangat pendek (3-5 kata) ke kalimat kompleks (25+ kata). Ubah struktur, mulai dengan subjek, objek, atau keterangan.'
+            };
+
+            prompt += `
+
+3. **VARIASI KALIMAT & STRUKTUR**
+   - ${varietyTexts[variety]}
+   - Jangan mulai semua kalimat dengan pola yang sama
+   - Contoh variasi:
+     * "SEO itu penting." (pendek)
+     * "Tapi banyak orang yang salah paham tentang cara kerjanya." (sedang)
+     * "Dari pengalaman ${pronounInfo.first} selama 5 tahun mengelola berbagai website, ${pronounInfo.first} menemukan bahwa kesalahan terbesar adalah mengabaikan aspek teknis yang sebenarnya fundamental." (panjang)`;
+
+            const emotionTexts = {
+                '1': 'Tambahkan sedikit ekspresi emosi di beberapa bagian',
+                '2': 'Ekspresikan perasaan, keheranan, atau antusiasme di beberapa poin penting',
+                '3': 'Tunjukkan emosi yang kuat, keheranan, frustrasi, atau kegembiraan. Gunakan interjeksi dan ekspresi emosional.'
+            };
+
+            if (emotion > 0) {
+                prompt += `
+
+4. **EMOTIONAL EXPRESSION**
+   - ${emotionTexts[emotion]}
+   - Contoh - "${pronounInfo.first} shock waktu tau fakta ini!", "Ini bikin frustasi sih...", "Wah, ini game changer banget!"
+   - Jangan takut menunjukkan reaksi emosional yang genuine`;
+            }
+
+            if (rhetorical) {
+                prompt += `
+
+5. **PERTANYAAN RETORIS & TRANSISI NATURAL**
+   - Gunakan pertanyaan retoris untuk engage pembaca - "Kenapa ini penting?", "Apa yang bikin ini berbeda?"
+   - Transisi natural - "Nah, sekarang...", "Oh iya, satu lagi...", "Tunggu dulu...", "Menariknya..."
+   - Hindari transisi formal AI - "Selanjutnya", "Kemudian", "Oleh karena itu"`;
+            }
+
+            if (imperfect) {
+                prompt += `
+
+6. **IZINKAN "IMPERFECTION" NATURAL**
+   - Boleh ada sedikit digression atau side note - "Oh iya, ngomong-ngomong..."
+   - Koreksi diri sendiri - "Atau mungkin lebih tepatnya...", "Maksud ${pronounInfo.first}..."
+   - Kalimat yang tidak sempurna tapi natural - "Jadi gini, cara ini tuh... gimana ya jelasinnya... oke, intinya..."
+   - Parenthetical remarks - "(${pronounInfo.first} serius!)", "(trust me on this)"`;
+            }
+
+            prompt += `
+
+### HINDARI POLA AI (PRIORITAS TINGGI!)
+❌ **JANGAN PERNAH:**
+- Mulai dengan "Di era digital ini", "Dalam dunia yang terus berkembang"
+- Struktur listicle kaku - "Pertama..., Kedua..., Ketiga..." (kecuali memang gaya listicle)
+- Semua paragraf panjangnya sama persis
+- Kalimat yang terlalu perfect dan formal
+- *Teks*, **Teks**, **TITIK DUA (:)** kecuali untuk waktu (contoh "Pukul 10.00 WIB")
+  * SALAH - "Ada 3 cara: pertama, kedua, ketiga"
+  * BENAR - "Ada 3 cara. Pertama, kedua, ketiga." atau "Ada 3 cara, yaitu pertama..."
+- Kata-kata AI detector magnet - "comprehensive", "delve into", "navigating", "landscape", "realm", "robust", "streamline", "crucial", "paramount", "leverage", "utilize"
+- Repetisi kata yang berlebihan dalam paragraf yang sama
+- Tone yang terlalu objektif tanpa personality
+- Transisi yang terlalu formal dan kaku
+
+✅ **SEBALIKNYA, LAKUKAN:**
+- Mulai dengan hook personal atau pertanyaan
+- Alur natural, tidak terstruktur terlalu rigid
+- Paragraf bervariasi - ada yang 2 kalimat, ada yang 5-6 kalimat
+- Campurkan perfect dan imperfect sentences
+- Gunakan sinonim dan variasi kata
+- Tunjukkan personality dan voice yang khas
+- Alur pemikiran yang mengalir seperti orang ngomong
+- Gunakan koma, titik, atau kata penghubung "yaitu", "seperti", "misalnya" sebagai pengganti titik dua`;
+
+            if (draft) {
+                prompt += `
+
+## DRAFT/CONTEXT YANG PERLU DIPARAFRASE
+${draft}
+
+⚠️ CRITICAL: 
+- Parafrase TOTAL dengan gaya conversational dan personal
+- Jangan copy paste struktur atau pola kalimat dari draft
+- Tambahkan perspektif dan opini pribadi ${pronounInfo.first}
+- Ubah urutan informasi jika perlu
+- Pertahankan sitasi akademik jika ada, tapi tulis ulang kalimatnya`;
+            }
+
+            if (elements.length > 0) {
+                prompt += `
+
+## ELEMEN TAMBAHAN YANG HARUS DISERTAKAN
+${elements.map(e => `- ${e.charAt(0).toUpperCase() + e.slice(1)}`).join('\n')}
+
+## KODE HTML KOMPONEN (Gunakan format ini dengan TEPAT)
+
+`;
+                
+                Object.keys(elementsCode).forEach(key => {
+                    const componentName = key.toUpperCase();
+                    prompt += `═══════════════════════════════════════\n`;
+                    prompt += `KOMPONEN - ${componentName}\n`;
+                    prompt += `═══════════════════════════════════════\n`;
+                    prompt += `${elementsCode[key]}\n\n`;
+                });
+
+                prompt += `═══════════════════════════════════════\n`;
+                prompt += `⚠️ PENTING \n`;
+                prompt += `- Gunakan kode HTML di atas PERSIS seperti yang diberikan\n`;
+                prompt += `- JANGAN ubah class name atau struktur HTML-nya\n`;
+                prompt += `- Sesuaikan hanya konten/text di dalamnya\n`;
+                prompt += `- Ganti URL gambar dan ID video sesuai kebutuhan\n`;
+                prompt += `═══════════════════════════════════════`;
+            }
+
+            prompt += `
+
+## ATURAN PENULISAN WAJIB
+✅ WAJIB:
+- Kalimat pendek dan tegas, tapi bervariasi panjangnya
+- Gunakan kalimat aktif, hindari pasif berlebihan
+- Fokus pada wawasan praktis dengan sentuhan personal
+- Sertakan data/fakta + opini/interpretasi pribadi
+- Gunakan "${pronounInfo.first}" dan "${pronounInfo.second}" secara konsisten
+- Paragraf pembuka dimulai dengan - <p><a href="https://www.pointru.com">PoinTru.com</a> - [isi paragraf dengan hook menarik atau pertanyaan...]</p>
+- Minimal 2 subjudul (<h3>) setiap 300 kata
+- Semua paragraf menggunakan tag <p>
+
+❌ HINDARI DI KONTEN ARTIKEL:
+- *Teks*, **Teks**, **Titik dua (:)** - Gunakan koma, titik, atau kata "yaitu/seperti/misalnya" sebagai pengganti
+- Tanda pisah panjang (–), gunakan koma atau titik
+- Kata pengisi berlebihan - bisa, mungkin, hanya, yang, sangat, sebenarnya, tentu
+- Kata AI - selami, menyelidiki, menavigasi, realm, komprehensif, krusial, robust, leverage, streamline, utilize, paramount
+- Frasa klise - "Di era digital ini", "Panduan lengkap", "Dalam konteks ini"
+- Markdown, tanda bintang, tanda pagar
+- Kalimat pembuka umum - "kesimpulannya", "pada akhirnya", "dapat disimpulkan bahwa"
+- Semua kalimat dengan pola subject-verb-object yang monoton
+
+## FORMAT OUTPUT YANG DIHARAPKAN
+1. Judul Artikel (42-46 karakter, menarik dan natural, include keyword jika ada)
+2. Meta Deskripsi (130-150 karakter, with personality, include keyword)
+3. Konten HTML Lengkap (dengan personality dan voice yang kuat)
+4. Gambar Header dengan format:
+   <img src="https://tse1.mm.bing.net/th?q=[keyword]" alt="[deskripsi natural dengan keyword]" title="[judul natural]" width="100%">
+5. Label (maksimal 2, relevant, dan pilih salah satu dari label utama berikut: AI & Tools, Digital Finance, PoinPoin, Tips & Trik)
+6. Keyword Utama${keyword ? ' - ' + keyword : ''}
+7. Permalink SEO-friendly (maksimal 39 karakter, include keyword)
+
+## STRUKTUR ARTIKEL YANG DIHARAPKAN
+
+### Pembuka (Hook Strong!)
+- Jangan mulai dengan definisi atau penjelasan umum
+- Mulai dengan pertanyaan provocative, statement controversial, anekdot personal, atau fakta mengejutkan
+- Contoh - "${pronounInfo.first} pernah buang 6 bulan untuk strategi SEO yang ternyata salah total."
+- Atau - "${pronounInfo.second} tau nggak, 90% orang salah paham tentang cara kerja algoritma Google?"
+- Integrasikan keyword di 100 kata pertama secara natural
+
+### Isi (Natural Flow sesuai ${styleInfo.name})
+${styleInfo.structure}
+- Campurkan fakta → opini → contoh → experience → insight
+- Gunakan subheading yang include keyword atau variasi
+
+### Penutup
+<h3>Akhir Kata</h3>
+<p>Jadi, intinya [rangkum dengan bahasa sesuai gaya ${pronounInfo.desc}]. Dari pengalaman ${pronounInfo.first}, [tambah insight personal]. Artikel tentang ${title} ini hopefully bisa ngasih ${pronounInfo.second} gambaran yang lebih jelas. Kalau ada pertanyaan atau pengalaman serupa, feel free buat komen di bawah ya!</p>
+<p>Baca artikel lainnya, cek aja di <a href="https://www.pointru.com/p/sitemap.html">Sitemap</a>.</p>
+
+## 🎯 FINAL CHECKLIST SEBELUM SUBMIT:
+Pastikan artikel sudah:
+- [ ] Keyword terintegrasi natural di judul, H2/H3, paragraf awal (jika ada keyword)
+- [ ] Kata panggil "${pronounInfo.first}" dan "${pronounInfo.second}" konsisten
+- [ ] Mengikuti struktur ${styleInfo.name}
+- [ ] Ada opini/pengalaman pribadi (minimal 3 tempat berbeda)
+- [ ] Variasi panjang kalimat (pendek, sedang, panjang)
+- [ ] Ada ekspresi emosi atau reaksi personal
+- [ ] Ada pertanyaan retoris (minimal 2)
+- [ ] TIDAK ada titik dua (:) kecuali untuk waktu
+- [ ] Tidak ada kata-kata AI detector magnet
+- [ ] Tidak ada pola repetitif yang monoton
+- [ ] Personality dan voice yang kuat terasa
+- [ ] Baca ulang - apakah terdengar seperti orang ngomong? Jika ya, PERFECT!
+
+INGAT - Tujuan utama adalah menulis seperti MANUSIA yang EXPERT dengan gaya ${styleInfo.name}, bukan AI yang sempurna!
+
+Mulai buat artikelnya sekarang dengan personality yang kuat!`;
+
+            document.getElementById('blog-result').textContent = prompt;
+            document.getElementById('blog-output').classList.add('show');
         }
-      }, [currentPage, posts]);
-      
-      // Render current page
-      const renderContent = () => {
-        if (loading) {
-          return (
-            <div className="min-h-screen flex items-center justify-center">
-              <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full"></div>
-            </div>
-          );
+
+        // Generate News Prompt
+        function generateNewsPrompt() {
+            let title = document.getElementById('news-title').value.trim();
+            let keyword = document.getElementById('news-keyword').value.trim();
+            const context = document.getElementById('news-context').value.trim();
+
+            if (!title && context) {
+                const suggestedTitle = context.split(/\s+/).slice(0, 10).join(' ') + '...';
+                document.getElementById('news-title').value = suggestedTitle;
+                title = suggestedTitle;
+                if (!keyword) {
+                    const suggestedKeywords = extractKeywords(context, 3).join(', ');
+                    document.getElementById('news-keyword').value = suggestedKeywords;
+                    keyword = suggestedKeywords;
+                }
+                alert("Judul dan Keyword telah dibuat secara otomatis berdasarkan Informasi Dasar Berita Anda. Silakan periksa atau ubah jika perlu.");
+            }
+            
+            const style = document.getElementById('news-style').value;
+            const length = document.getElementById('news-length').value;
+            
+            const journalisticVoice = document.getElementById('news-journalistic-voice').checked;
+            const sceneSetting = document.getElementById('news-scene-setting').checked;
+            const variety = document.getElementById('news-variety').value;
+            const transition = document.getElementById('news-transition').checked;
+
+            if (!title) {
+                alert('Mohon masukkan Judul Berita atau isi Informasi Dasar Berita terlebih dahulu!');
+                return;
+            }
+
+            const elements = [];
+            if (document.getElementById('news-quote').checked) elements.push('quote narasumber');
+            if (document.getElementById('news-data').checked) elements.push('data statistik');
+            if (document.getElementById('news-timeline').checked) elements.push('timeline kejadian');
+            if (document.getElementById('news-image').checked) elements.push('placeholder gambar');
+
+            const styleDesc = {
+                'formal': 'Formal dan objektif seperti media massa mainstream, tapi dengan sentuhan jurnalistik personal',
+                'semiformal': 'Semi-formal dengan sentuhan personal dan observasi jurnalis untuk media online',
+                'casual': 'Casual dan engaging dengan voice jurnalis yang kuat untuk blog berita'
+            };
+
+            let prompt = `# INSTRUKSI PEMBUATAN BERITA (5W+1H) ANTI-AI DETECTION
+
+## ROLE & CONTEXT
+Kamu adalah jurnalis profesional yang menulis berita faktual dengan struktur 5W+1H, TAPI dengan sentuhan reportase lapangan yang human dan natural. Berita yang terlalu kaku dan robotic akan terdeteksi AI!
+
+## TOPIK BERITA
+Judul - ${title}`;
+
+            if (keyword) {
+                prompt += `
+
+## 🎯 KEYWORD TARGETING BERITA
+Keyword Utama - ${keyword}
+
+WAJIB INTEGRASIKAN:
+1. **Lead Paragraph** - Keyword di paragraf pembuka (1x, natural)
+2. **Subjudul** - Gunakan keyword atau variasi di H3
+3. **Body Berita** - Sebarkan natural dalam konteks berita
+4. **Meta Description** - Include keyword
+5. **Alt Text Gambar** - Sertakan keyword dalam deskripsi
+
+ATURAN:
+✅ Natural dan kontekstual dalam alur berita
+✅ Tidak mengorbankan objektivitas jurnalistik
+❌ Jangan keyword stuffing
+❌ Jangan paksa jika tidak sesuai konteks berita`;
+            }
+
+            if (context) {
+                prompt += `
+
+## INFORMASI DASAR (5W+1H)
+${context}`;
+            }
+
+            prompt += `
+
+## SPESIFIKASI BERITA
+- Panjang target - ${length} kata
+- Gaya penulisan - ${styleDesc[style]}
+- Bahasa - 95% Bahasa Indonesia, 5% Bahasa Inggris umum
+- Struktur - Gunakan HTML tanpa tag dokumen utama`;
+
+            prompt += `
+
+## 🛡️ INSTRUKSI HUMANISASI BERITA (PRIORITAS TINGGI!)
+
+Berita yang HANYA berisi fakta kering tanpa sentuhan jurnalistik akan terdeteksi AI!
+
+### WAJIB DILAKUKAN`;
+
+            if (journalisticVoice) {
+                prompt += `
+
+1. **GUNAKAN SUARA JURNALISTIK PERSONAL**
+   - Tambahkan observasi reporter - "Terlihat di lokasi...", "Suasana tampak...", "Menurut pengamatan di lapangan..."
+   - Sisipkan konteks dari sudut pandang jurnalis - "Yang menarik dari kejadian ini adalah..."
+   - Jangan hanya report fakta, tapi berikan interpretasi dan konteks
+   - Contoh - "Saat ditemui di lokasi kejadian, suasana masih terasa tegang. Beberapa warga masih berkumpul..."`;
+            }
+
+            if (sceneSetting) {
+                prompt += `
+
+2. **SERTAKAN SCENE SETTING & DESKRIPSI ATMOSFER**
+   - Gambarkan kondisi lokasi dengan detail sensorik
+   - Deskripsikan suasana - ramai/sepi, tegang/meriah, dll
+   - Tambahkan detail visual - cuaca, kondisi tempat, ekspresi orang
+   - Contoh - "Hujan gerimis membasahi Jakarta Pusat sore ini saat acara peluncuran berlangsung di Ballroom Hotel XYZ yang dipenuhi ratusan undangan."`;
+            }
+
+            const varietyTexts = {
+                '1': 'Gunakan variasi panjang kalimat dasar',
+                '2': 'Kombinasikan kalimat berita pendek (7-12 kata) dengan kalimat deskriptif lebih panjang (15-20 kata)',
+                '3': 'Variasikan drastis - kalimat lead pendek dan punchy (5-8 kata) dengan paragraf deskriptif yang lebih flowing (20-30 kata)'
+            };
+
+            prompt += `
+
+3. **VARIASI STRUKTUR KALIMAT**
+   - ${varietyTexts[variety]}
+   - Jangan semua kalimat mulai dengan subjek-verb-objek
+   - Variasikan dengan keterangan di awal - "Pada Selasa pagi...", "Di tengah hiruk pikuk..."
+   - Contoh variasi:
+     * "Presiden hadir." (sangat pendek)
+     * "Acara dimulai pukul 10.00 WIB dengan sambutan hangat." (sedang)
+     * "Ratusan peserta memadati ruangan utama sejak pagi hari, antusias menyaksikan moment bersejarah yang telah ditunggu selama berbulan-bulan ini." (panjang)`;
+
+            if (transition) {
+                prompt += `
+
+4. **TRANSISI NATURAL ANTAR PARAGRAF**
+   - Jangan gunakan transisi robotic - "Selanjutnya", "Kemudian", "Sementara itu"
+   - Gunakan transisi jurnalistik natural:
+     * "Yang menarik...", "Perlu dicatat bahwa...", "Fakta lain menunjukkan..."
+     * "Tidak hanya itu...", "Lebih dari sekadar...", "Yang tak kalah penting..."
+   - Buat alur cerita mengalir, tidak terkotak-kotak`;
+            }
+
+            prompt += `
+
+### HINDARI POLA BERITA AI (CRITICAL!)
+❌ **JANGAN:**
+- Struktur terlalu rigid - Para 1 = Who/What, Para 2 = When/Where, Para 3 = Why/How
+- Semua kalimat panjang dan kompleksitasnya sama
+- Tidak ada detail sensorik atau deskriptif
+- Hanya fakta kering tanpa konteks atau interpretasi
+- *Teks*, **Teks**, **TITIK DUA (:)** kecuali untuk waktu dan atribusi quote
+  * SALAH - "Acara meliputi: pembukaan, sambutan, penutupan"
+  * BENAR - "Acara meliputi pembukaan, sambutan, dan penutupan"
+  * BOLEH - 'Menurut Direktur: "Kami sangat senang..."' (untuk quote)
+- Transisi formal yang kaku
+- Kata-kata AI - "comprehensive coverage", "stakeholders", "robust initiative", "leverage"
+- Quote yang terlalu perfect dan formal
+
+✅ **SEBALIKNYA, LAKUKAN:**
+- Struktur piramida terbalik tapi dengan flow natural
+- Campurkan kalimat pendek impactful dengan deskripsi lebih panjang
+- Tambahkan scene setting dan detail atmosfer
+- Fakta + konteks + interpretasi jurnalistik
+- Transisi yang mengalir natural
+- Quote yang terdengar seperti orang bicara asli
+- Variasi pacing - ada bagian cepat, ada bagian yang lebih detail`;
+
+            if (elements.length > 0) {
+                prompt += `
+
+## ELEMEN TAMBAHAN
+${elements.map(e => `- ${e.charAt(0).toUpperCase() + e.slice(1)}`).join('\n')}`;
+            }
+
+            prompt += `
+
+## STRUKTUR BERITA (Piramida Terbalik dengan Sentuhan Human)
+
+### 1. LEAD PARAGRAPH (Hook + 5W)
+- <p><a href="https://www.pointru.com">PoinTru.com</a> - [Buka dengan scene setting singkat atau fakta paling penting]</p>
+- Jawab What, Who, When, Where di paragraf pertama
+- TAPI jangan terlalu kaku, tambahkan sedikit deskripsi
+- Integrasikan keyword secara natural jika ada
+- Contoh - "<a href="https://www.pointru.com">PoinTru.com</a> - Jakarta diguncang kabar mengejutkan Selasa pagi ini. PT XYZ resmi meluncurkan produk revolusioner di hadapan ratusan media dan undangan di Grand Ballroom Hotel ABC."
+
+### 2. BODY (Detail + Konteks)
+- **Paragraf 2-3** - Detail Why dan How dengan observasi lapangan
+- **Paragraf 4-5** - Quote narasumber (buat terdengar natural!)
+- **Paragraf 6-7** - Konteks, latar belakang, data pendukung
+- **Sisipkan** - Observasi jurnalis, deskripsi suasana, detail visual
+
+### 3. CLOSING (Wrap Up + Future)
+- Informasi tambahan atau rencana ke depan
+- Quote penutup jika ada
+- Tidak perlu kalimat "Demikian berita ini..." yang kaku
+
+## ATURAN PENULISAN BERITA HUMANIZED
+✅ WAJIB:
+- Objektif tapi dengan sentuhan reportase lapangan
+- Variasi kalimat - ada yang pendek punchy, ada yang deskriptif
+- Scene setting dan detail atmosfer di beberapa bagian
+- Quote yang terdengar seperti orang bicara asli (boleh tidak perfect grammar)
+- Konteks dan interpretasi jurnalistik, jangan hanya fakta mentah
+- Gunakan <h3> untuk subjudul yang menarik (bukan "Latar Belakang" tapi "Perjalanan Menuju Peluncuran")
+- Semua paragraf menggunakan <p>
+
+❌ HINDARI DI KONTEN BERITA:
+- *Teks*, **Teks**, **Titik dua (:)** kecuali untuk waktu (10.00 WIB) dan quote attribution
+- Struktur terlalu rigid dan predictable
+- Semua kalimat dengan pola dan panjang yang sama
+- Tidak ada deskripsi atau detail visual
+- Quote yang terlalu formal dan sempurna
+- Transisi robotic - "Selanjutnya", "Sementara itu", "Kemudian"
+- Kata-kata AI - comprehensive, stakeholder, initiative, robust, leverage, utilize
+- Objektif berlebihan sampai terasa dingin dan robotic
+
+## TIPS QUOTE NARASUMBER YANG NATURAL:
+- JANGAN - "Kami sangat mengapresiasi dukungan dari semua pihak yang telah berkontribusi dalam kesuksesan ini."
+- LAKUKAN - "Ini pencapaian luar biasa. Tim sudah kerja keras berbulan-bulan, dan akhirnya berhasil juga," ujar CEO dengan senyum lebar.
+
+## FORMAT OUTPUT
+1. Judul Berita (40-45 karakter, faktual tapi menarik, include keyword)
+2. Meta Deskripsi (130-150 karakter, with hook, include keyword)
+3. Konten HTML Berita (dengan sentuhan jurnalistik)
+4. Gambar dengan alt text yang deskriptif (include keyword)
+5. Label berita (maksimal 5, include keyword variations)
+6. Permalink SEO (maksimal 39 karakter, include keyword)
+
+## PENUTUP BERITA
+<h3>Outlook ke Depan</h3>
+<p>[Tuliskan prospect atau rencana ke depan terkait berita ini. Akhiri dengan kalimat yang membuka kemungkinan follow-up story]. Untuk berita terkait lainnya, kunjungi <a href="https://www.pointru.com/p/sitemap.html">Sitemap</a>.</p>
+
+## 🎯 FINAL CHECKLIST BERITA HUMANIZED:
+Pastikan berita sudah:
+- [ ] Keyword terintegrasi natural (jika ada)
+- [ ] Ada scene setting atau deskripsi atmosfer (minimal 2 tempat)
+- [ ] Variasi panjang kalimat (pendek, sedang, panjang)
+- [ ] Quote yang terdengar natural (bukan terlalu formal)
+- [ ] Observasi atau interpretasi jurnalistik (bukan hanya fakta)
+- [ ] Transisi yang mengalir (bukan "Selanjutnya", "Kemudian")
+- [ ] Detail visual atau sensorik (minimal 3)
+- [ ] TIDAK ada titik dua (:) kecuali waktu dan quote attribution
+- [ ] Tidak ada kata-kata AI detector magnet
+- [ ] Baca ulang - apakah terasa seperti reportase lapangan? Jika ya, PERFECT!
+
+INGAT - Berita yang baik bukan hanya melaporkan fakta, tapi membawa pembaca ke lokasi kejadian!
+
+Mulai tulis beritanya sekarang dengan sentuhan reportase lapangan yang kuat!`;
+
+            document.getElementById('news-result').textContent = prompt;
+            document.getElementById('news-output').classList.add('show');
         }
-        
-        const currentPost = posts.find(p => p.slug === currentPage);
-        
-        if (!currentPost) {
-          // Check if it's home (empty slug)
-          if (currentPage === '') {
-            return <GridLayout posts={posts} navigateTo={navigateTo} />;
-          }
-          return <NotFound navigateTo={navigateTo} />;
+
+        // Copy to Clipboard
+        function copyPrompt(type) {
+            const resultBox = document.getElementById(`${type}-result`);
+            const text = resultBox.textContent;
+
+            if (!text || text.trim() === '') {
+                alert('Belum ada prompt yang di-generate! Klik tombol Generate terlebih dahulu.');
+                return;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification();
+            }).catch(err => {
+                alert('Gagal menyalin prompt. Coba lagi!');
+            });
         }
-        
-        switch (currentPost.type) {
-          case 'post':
-            return <PostLayout post={currentPost} allPosts={posts} navigateTo={navigateTo} />;
-          case 'page':
-            return <PageLayout page={currentPost} />;
-          case 'grid':
-            return <GridLayout posts={posts} navigateTo={navigateTo} />;
-          default:
-            return <PageLayout page={currentPost} />;
+
+        // Show Notification
+        function showNotification() {
+            const notif = document.getElementById('notification');
+            notif.classList.add('show');
+            setTimeout(() => {
+                notif.classList.remove('show');
+            }, 3000);
         }
-      };
-      
-      return (
-        <ThemeProvider>
-          <div className="min-h-screen flex flex-col">
-            <ReadingProgress />
-            <Navigation currentPage={currentPage} navigateTo={navigateTo} posts={posts} />
-            <main className="flex-1">
-              {renderContent()}
-            </main>
-            <Footer />
-            <CookieBanner />
-          </div>
-        </ThemeProvider>
-      );
-    };
-    
-    // Render App
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
-    
-    // Initialize Lucide icons
-    document.addEventListener('DOMContentLoaded', () => {
-      lucide.createIcons();
-    });
-  </script>
+
+        // Clear Form
+        function clearForm(type) {
+            if (type === 'blog') {
+                document.getElementById('blog-title').value = '';
+                document.getElementById('blog-keyword').value = '';
+                document.getElementById('blog-draft').value = '';
+                document.getElementById('blog-length').value = '800';
+                document.getElementById('blog-pronouns').value = 'saya-anda';
+                // --- NEW FEATURE START: Reset ke pilihan otomatis ---
+                document.getElementById('blog-style-auto').checked = true;
+                // --- NEW FEATURE END ---
+                
+                document.getElementById('blog-personal-opinion').checked = true;
+                document.getElementById('blog-conversational').checked = true;
+                document.getElementById('blog-variety').value = '3';
+                document.getElementById('blog-variety-value').textContent = 'Tinggi';
+                document.getElementById('blog-emotion').value = '2';
+                document.getElementById('blog-emotion-value').textContent = 'Sedang';
+                document.getElementById('blog-rhetorical').checked = true;
+                document.getElementById('blog-imperfect').checked = true;
+                
+                document.querySelectorAll('#blog input[type="checkbox"]:not([id*="personal"]):not([id*="conversational"]):not([id*="rhetorical"]):not([id*="imperfect"])').forEach(cb => {
+                    if (cb.id.startsWith('blog-') && ['table', 'list', 'button', 'notif', 'image', 'faq', 'slider', 'code', 'youtube'].some(el => cb.id.includes(el))) {
+                        cb.checked = false;
+                    }
+                });
+                document.getElementById('blog-result').textContent = '';
+                document.getElementById('blog-output').classList.remove('show');
+            } else {
+                document.getElementById('news-title').value = '';
+                document.getElementById('news-keyword').value = '';
+                document.getElementById('news-context').value = '';
+                document.getElementById('news-style').value = 'semiformal';
+                document.getElementById('news-length').value = '500';
+                
+                document.getElementById('news-journalistic-voice').checked = true;
+                document.getElementById('news-scene-setting').checked = true;
+                document.getElementById('news-variety').value = '3';
+                document.getElementById('news-variety-value').textContent = 'Tinggi';
+                document.getElementById('news-transition').checked = true;
+                
+                document.querySelectorAll('#news input[type="checkbox"]:not([id*="journalistic"]):not([id*="scene"]):not([id*="transition"])').forEach(cb => {
+                    if (cb.id.startsWith('news-') && ['quote', 'data', 'timeline', 'image'].some(el => cb.id.includes(el))) {
+                        cb.checked = false;
+                    }
+                });
+                document.getElementById('news-result').textContent = '';
+                document.getElementById('news-output').classList.remove('show');
+            }
+        }
+
+        // Event Listeners for buttons
+        document.getElementById('btn-generate-blog').addEventListener('click', generateBlogPrompt);
+        document.getElementById('btn-copy-blog').addEventListener('click', () => copyPrompt('blog'));
+        document.getElementById('btn-clear-blog').addEventListener('click', () => clearForm('blog'));
+
+        document.getElementById('btn-generate-news').addEventListener('click', generateNewsPrompt);
+        document.getElementById('btn-copy-news').addEventListener('click', () => copyPrompt('news'));
+        document.getElementById('btn-clear-news').addEventListener('click', () => clearForm('news'));
+    </script>
 </body>
 </html>
